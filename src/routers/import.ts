@@ -1,12 +1,12 @@
 import jwt from "jsonwebtoken";
 import express, { Router } from "express";
-import fileUpload from "express-fileupload";
+import fileUpload, {FileArray, UploadedFile} from "express-fileupload";
 import fs from "fs";
 import CloudStorageService from "../services/cloudStorage";
-import { User } from "../entities/index";
+import {prisma} from '../core/Prisma'
 
 const importRouter = Router();
-const jwtSecret = process.env.JWT_SECRET;
+const jwtSecret = process.env.JWT_SECRET as string;
 const cloudStorage = new CloudStorageService();
 
 importRouter.use(
@@ -33,10 +33,10 @@ importRouter.post("/upload", async (req, res) => {
       throw Error("missing token");
     }
 
-    const files = [];
-    Object.keys(req.files).forEach((file) => files.push(req.files[file]));
+    const files = Object.keys(req.files).map<UploadedFile>(file => req.files[file] as UploadedFile)
+
     let totalStreams = 0;
-    files[0].forEach((file): void => {
+    files.forEach((file): void => {
       const validName = /StreamingHistory[0-9][0-9]?.json/g.test(file.name);
       if (!validName) {
         throw Error("invalid files");
@@ -63,14 +63,17 @@ importRouter.post("/upload", async (req, res) => {
     let userId;
     try {
       const decodedToken = jwt.verify(token, jwtSecret);
+      // @ts-ignore
       userId = decodedToken.userId;
     } catch (e) {
       throw Error("invalid auth");
     }
 
-    const user = await User.findOne({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
-      relations: ["imports"],
+      include: {
+        imports: true
+      }
     });
 
     console.log(user);

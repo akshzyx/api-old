@@ -1,8 +1,8 @@
 import { Router, Request, Response } from "express";
 import SpotifyWebApi from "spotify-web-api-node";
 import jwt from "jsonwebtoken";
-import { User, UserSettings } from "../entities";
 import { resetSpotifyApiTokens } from "../utils/spotify-api.utils";
+import { prisma, User } from "../core/Prisma";
 
 const authRouter = Router();
 
@@ -45,16 +45,16 @@ authRouter.get("/v1/auth/redirect/url", (req, res) => {
 });
 
 authRouter.get("/v1/auth/callback", async (req: Request, res: Response) => {
-  const code: string = (req.query.code as string) || null;
-  // The returnedState should be compared with the sent one.
-  // const returnedState = req.query.state || null;
-  const spotifyApi = new SpotifyWebApi({
-    redirectUri,
-    clientSecret: clientSecrect,
-    clientId,
-  });
-
   try {
+    const code: string = req.query.code as string;
+    // The returnedState should be compared with the sent one.
+    // const returnedState = req.query.state || null;
+    const spotifyApi = new SpotifyWebApi({
+      redirectUri,
+      clientSecret: clientSecrect,
+      clientId,
+    });
+
     const data = await spotifyApi.authorizationCodeGrant(code);
     spotifyApi.setAccessToken(data.body.access_token);
     spotifyApi.setRefreshToken(data.body.refresh_token);
@@ -62,36 +62,30 @@ authRouter.get("/v1/auth/callback", async (req: Request, res: Response) => {
 
     const userData = await spotifyApi.getMe();
     const userId = userData.body.id;
-    const displayName = userData.body.display_name;
+    const displayName = userData.body.display_name as string;
     // search if user already exists
-    const foundUser: User = await User.findOne({
-      where: { id: userId },
-      relations: ["settings"],
-    });
+    const foundUser = await prisma.user.findUnique({where: {id: userId}, include: {settings: true}})
 
-    let user: User = foundUser;
-
+    let user: User
     // if user doenst exist create one
-    if (user === null || user === undefined) {
-      user = User.create({
-        id: userId,
-        displayName: displayName,
-        // streams: [],
-        disabled: false,
-      });
+    if (!foundUser) {
+      user = await prisma.user.create({
+        data: {
+          id: userId,
+          displayName: displayName,
+          disabled: false,
+          settings: {
+            create: {
+              refreshToken: data.body.refresh_token,
+              accessToken: data.body.access_token,
+              accessTokenExpiration: expiryDate,
+              hasImported: false
+          }}
+        }
+      })
     }
 
-    // update auth on the (existing) user
-    user.settings = UserSettings.create({
-      refreshToken: data.body.refresh_token,
-      accessToken: data.body.access_token,
-      accessTokenExpiration: expiryDate,
-    });
-
-    // save all changes to the user
-    user.save();
-
-    const jwtSecret = process.env.JWT_SECRET;
+    const jwtSecret = process.env.JWT_SECRET as string;
     const token = jwt.sign({ userId, displayName }, jwtSecret);
 
     // res.setHeader("Authorization", token);
