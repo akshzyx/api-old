@@ -1,0 +1,52 @@
+// https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String       @id
+  displayName    String
+  disabled       Boolean
+  imports        UserImport[]
+  settings       UserSettings @relation(fields: [userSettingsId], references: [id])
+  userSettingsId Int
+}
+
+model UserImport {
+  id                     String   @id
+  user                   String
+  selfLink               String
+  mediaLink              String
+  name                   String
+  bucket                 String
+  generation             String
+  metaGeneration         String
+  contentType            String
+  storageClass           String
+  size                   String
+  md5Hash                String
+  contentEncoding        String
+  cacheControl           String
+  crc32c                 String
+  etag                   String
+  timeCreated            DateTime
+  updated                DateTime
+  timeStorageClassUpdate DateTime
+  User                   User?    @relation(fields: [userId], references: [id])
+  userId                 String?
+}
+
+model UserSettings {
+  id                    Int      @id @default(autoincrement())
+  refreshToken          String
+  accessToken           String
+  accessTokenExpiration DateTime
+  hasImported           Boolean
+  User                  User[]
+}
