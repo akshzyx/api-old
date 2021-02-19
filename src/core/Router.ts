@@ -1,9 +1,6 @@
 import express from "express";
-import importRouter from "../routers/import";
-// import authCheck from "../core/Auth";
-import { infoLogger } from "../misc/Logger";
-// import apiRouter from "../routers/api";
 import authRouter from "../routers/auth";
+import importRouter from "../routers/import";
 
 export default async (): Promise<void> => {
   const app = express();
@@ -13,10 +10,8 @@ export default async (): Promise<void> => {
   );
 
   app.use(authRouter);
+
   app.use(importRouter);
 
-  // app.use(authCheck);
-  // app.use(apiRouter);
-
-  app.listen(process.env.API_PORT, () => infoLogger("Listening"));
+  app.listen(process.env.API_PORT, () => console.info("Listening"));
 };

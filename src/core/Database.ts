@@ -1,8 +1,6 @@
 import { Connection, createConnection } from "typeorm";
 import { TypeormEntities } from "../entities";
 
-import { errorLogger, infoLogger } from "../misc/Logger";
-
 export default async (): Promise<Connection> => {
   try {
     const db = await createConnection({
@@ -15,10 +13,10 @@ export default async (): Promise<Connection> => {
       synchronize: true,
       entities: TypeormEntities,
     });
-    infoLogger("Database connected");
+    console.info("Database connected");
     return db;
   } catch (error) {
-    errorLogger("Database connection failed!", error);
+    console.error("Database connection failed!", error);
     process.exit(1);
   }
 };
