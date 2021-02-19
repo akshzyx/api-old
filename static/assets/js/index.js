@@ -1,4 +1,4 @@
-let token;
+let token = localStorage.getItem("token");
 let uploadSucces = false;
 
 function on() {
@@ -10,6 +10,8 @@ function off() {
 }
 
 $(document).ready(function () {
+  nextStep();
+
   $("#submit").click(function () {
     on();
     var form_data = new FormData();
@@ -55,6 +57,7 @@ $("#authcode-check").on("click", () => {
       token = w.location.href.substring(
         w.location.href.indexOf("#complete?token=") + 16
       );
+      localStorage.setItem("token", token);
       w.close();
       clearInterval(i);
       nextStep();
