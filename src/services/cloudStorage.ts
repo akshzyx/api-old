@@ -1,6 +1,6 @@
 import { Bucket, Storage, UploadResponse } from "@google-cloud/storage";
-// import fs from "fs";
 import path from "path";
+import { prisma, User } from "../core/Prisma";
 
 class CloudStorageService {
   private _importBucket: Bucket;
@@ -18,19 +18,52 @@ class CloudStorageService {
   }
 
   public async uploadFile(
-    userId: string,
+    user: User,
     fileName: string,
     filePath: string
   ): Promise<UploadResponse> {
-    const file: UploadResponse = await this._importBucket.upload(filePath, {
+    const response: UploadResponse = await this._importBucket.upload(filePath, {
       gzip: true,
-      destination: `import/${userId}/${fileName}`,
+      destination: `import/${user.id}/${fileName}`,
       metadata: {
         cacheControl: "public, max-age=31536000",
       },
     });
 
-    return file;
+    const {
+      id,
+      selfLink,
+      mediaLink,
+      name,
+      bucket,
+      generation,
+      size,
+      md5Hash,
+      timeCreated,
+      updated,
+    } = response[1];
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        imports: {
+          create: {
+            id,
+            selfLink,
+            mediaLink,
+            name,
+            bucket,
+            generation,
+            size,
+            md5Hash,
+            timeCreated,
+            updated,
+          },
+        },
+      },
+    });
+
+    return response;
   }
 }
 

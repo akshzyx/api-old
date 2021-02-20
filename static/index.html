@@ -27,7 +27,7 @@
     </header>
     <main class="container">
       <section class="flex-container">
-        <div id="auth-check" class="step-current">
+        <div id="auth-check" class="step-hidden">
           <div class="text-center">
             <div class="authcode-wrapper">
               <h1>Authenticate</h1>
@@ -35,7 +35,7 @@
                 >Please login with Spotify to continue </label
               ><br />
               <br />
-              <button class="spotistats-button ripple mt-5" id="authcode-check">
+              <button class="spotistats-button ripple mt-5 next-step">
                 Login
               </button>
             </div>
@@ -54,13 +54,12 @@
           <p>
             Make sure to select all files you'd like to be imported at once!
           </p>
-          <input type="file" id="files" name="files[]" multiple /><br />
+          <input type="file" id="files" name="files" multiple /><br />
           <input type="text" name="uid" value="sjoerdgaatwakawaka" hidden />
           <br />
           <input
             type="button"
-            class="spotistats-button ripple"
-            id="submit"
+            class="spotistats-button ripple next-step"
             value="Upload"
           />
         </form>
@@ -71,8 +70,9 @@
               <h1>Success!</h1>
               <p id="streams-imported" class="half-witdh"></p>
               <p class="half-witdh"></p>Please open your Spotistats and click "import data" on the
-                settings page.
+                settings page and enter this code:
               </p>
+              <h1 class="import-code">0000</h1>
             </div>
           </div>
           <br />

@@ -28,9 +28,7 @@ const getAuthorizeURL = () => {
     clientSecret: clientSecrect,
     clientId,
   });
-  // TODO make state depend on the request. Maybe a hash of a cookie or something?
   const state = "spotify_auth_state";
-  // Return the authorization URL
   return spotifyApi.createAuthorizeURL(scopes, state);
 };
 
@@ -47,8 +45,6 @@ authRouter.get("/v1/auth/redirect/url", (req, res) => {
 authRouter.get("/v1/auth/callback", async (req: Request, res: Response) => {
   try {
     const code: string = req.query.code as string;
-    // The returnedState should be compared with the sent one.
-    // const returnedState = req.query.state || null;
     const spotifyApi = new SpotifyWebApi({
       redirectUri,
       clientSecret: clientSecrect,
@@ -63,33 +59,34 @@ authRouter.get("/v1/auth/callback", async (req: Request, res: Response) => {
     const userData = await spotifyApi.getMe();
     const userId = userData.body.id;
     const displayName = userData.body.display_name as string;
-    // search if user already exists
-    const foundUser = await prisma.user.findUnique({where: {id: userId}, include: {settings: true}})
+    const foundUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { settings: true },
+    });
 
-    let user: User
-    // if user doenst exist create one
+    let user: User;
     if (!foundUser) {
       user = await prisma.user.create({
         data: {
           id: userId,
           displayName: displayName,
           disabled: false,
+          importCode: Math.floor(1000 + Math.random() * 9000).toString(),
           settings: {
             create: {
               refreshToken: data.body.refresh_token,
               accessToken: data.body.access_token,
               accessTokenExpiration: expiryDate,
-              hasImported: false
-          }}
-        }
-      })
+              hasImported: false,
+            },
+          },
+        },
+      });
     }
 
     const jwtSecret = process.env.JWT_SECRET as string;
     const token = jwt.sign({ userId, displayName }, jwtSecret);
 
-    // res.setHeader("Authorization", token);
-    // res.send({ token });
     res
       .status(200)
       .redirect(`http://localhost:3000/import#complete?token=${token}`);

@@ -1,5 +1,5 @@
 import SpotifyWebApi from "spotify-web-api-node";
-import { prisma } from "../core/Prisma"
+import { prisma } from "../core/Prisma";
 
 /**
  * Resets the tokens for a given SpotifyWebApi oject
@@ -15,13 +15,18 @@ export function resetSpotifyApiTokens(spotifyApi: SpotifyWebApi): void {
  * @param {String} userId userId of wanted user
  * @returns {Promise<SpotifyWebApi>} Promise of SpotifyWebApi object for the given user
  */
-export async function getUserSpotifyApi(userId: string): Promise<SpotifyWebApi> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, include: { settings: true } })
+export async function getUserSpotifyApi(
+  userId: string
+): Promise<SpotifyWebApi> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { settings: true },
+  });
 
   if (!user) {
-    throw "user does not exist"
+    throw "user does not exist";
   }
-  
+
   const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const clientSecrect = process.env.SPOTIFY_CLIENT_SECRET;
@@ -44,15 +49,16 @@ export async function getUserSpotifyApi(userId: string): Promise<SpotifyWebApi> 
           );
 
           prisma.user.update({
-            where: user, data: {
+            where: user,
+            data: {
               settings: {
                 update: {
                   accessToken: refreshResult.body.access_token,
-                  accessTokenExpiration: expirationDate
-                }
-              }
-            }
-          })
+                  accessTokenExpiration: expirationDate,
+                },
+              },
+            },
+          });
 
           spotifyApi.setAccessToken(refreshResult.body.access_token);
           resolve(spotifyApi);
