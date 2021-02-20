@@ -88,7 +88,9 @@ authRouter.get("/v1/auth/callback", async (req: Request, res: Response) => {
 
     res
       .status(200)
-      .redirect(`http://localhost:3000/v1/import#complete?token=${token}`);
+      .redirect(
+        `https://import.spotistats.app/v1/import#complete?token=${token}`
+      );
     resetSpotifyApiTokens(spotifyApi);
   } catch (e) {
     res.status(500).send(e.toString());
