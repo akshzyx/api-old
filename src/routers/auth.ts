@@ -77,7 +77,6 @@ authRouter.get("/v1/auth/callback", async (req: Request, res: Response) => {
               refreshToken: data.body.refresh_token,
               accessToken: data.body.access_token,
               accessTokenExpiration: expiryDate,
-              hasImported: false,
             },
           },
         },

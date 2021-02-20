@@ -39,6 +39,5 @@ model UserSettings {
   refreshToken          String
   accessToken           String
   accessTokenExpiration DateTime
-  hasImported           Boolean
   User                  User[]
 }
