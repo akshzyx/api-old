@@ -61,13 +61,13 @@ class ImportStepper {
         body: form_data,
       }).then((res) => res.json());
 
-      if (typeof res == "object") {
+      if (res.success) {
         $("#streams-imported").text(res.message);
         $(".import-code").text(res.importCode);
-        resolve();
       } else {
         alert(JSON.parse(res.responseText).message);
       }
+      resolve();
     });
   }
 }

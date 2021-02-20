@@ -117,13 +117,14 @@ importRouter.post("/v1/import/upload", async (req, res) => {
 
     res
       .json({
+        success: true,
         message: `Succesfully imported ${totalStreams} streams!`,
         importCode: user.importCode,
       })
       .end();
   } catch (e) {
     console.log(e);
-    res.status(400).json({ message: e.message }).end();
+    res.status(400).json({ success: false, message: e.message }).end();
   }
 });
 
