@@ -22,6 +22,28 @@ importRouter.use(express.urlencoded({ extended: true }));
 
 importRouter.use("/v1/import", express.static("static"));
 
+importRouter.use("/v1/import/:userid/list", async (req, res) => {
+  const importCode = req.headers?.authorization;
+  const userId = req.params?.userid;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      imports: true,
+    },
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: "no user found" }).end();
+  }
+
+  if (user.importCode != importCode) {
+    return res.status(401).json({ message: "invalid authorization" }).end();
+  }
+
+  res.json(user);
+});
+
 importRouter.post("/v1/import/upload", async (req, res) => {
   try {
     if (req.files === null || !("files" in req.files)) {
