@@ -11,6 +11,9 @@ class ImportStepper {
   async updateInterface() {
     $(".step-current").removeClass("step-current");
     $($(".step-hidden")[this.currentStep]).addClass("step-current");
+
+    const hasFiles = document.getElementById("files").files.length > 0;
+    $("#upload").prop("disabled", !hasFiles);
   }
 
   async nextStep() {
@@ -86,4 +89,5 @@ const importStepper = new ImportStepper();
 
 $(document).ready(function () {
   $(".next-step").click(() => importStepper.nextStep());
+  $("#files").change(() => importStepper.updateInterface());
 });
