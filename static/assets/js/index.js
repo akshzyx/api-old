@@ -44,7 +44,7 @@ class ImportStepper {
   }
 
   async step2() {
-    return new Promise((resolve, _) => {
+    return new Promise(async (resolve, _) => {
       var form_data = new FormData();
       form_data.append("token", this._token);
 
@@ -56,23 +56,18 @@ class ImportStepper {
         );
       }
 
-      $.ajax({
-        url: `${this.SERVER_URL}/import/upload`,
-        type: "post",
-        data: form_data,
-        dataType: "text",
-        contentType: false,
-        processData: false,
-        error: (response) => {
-          this.loader.hide();
-          alert(JSON.parse(response.responseText).message);
-        },
-        success: (response) => {
-          $("#streams-imported").text(JSON.parse(response).message);
-          $(".import-code").text(JSON.parse(response).importCode);
-          resolve();
-        },
-      });
+      const res = await fetch(`${this.SERVER_URL}/import/upload`, {
+        method: "post",
+        body: form_data,
+      }).then((res) => res.json());
+
+      if (typeof res == "object") {
+        $("#streams-imported").text(res.message);
+        $(".import-code").text(res.importCode);
+        resolve();
+      } else {
+        alert(JSON.parse(res.responseText).message);
+      }
     });
   }
 }

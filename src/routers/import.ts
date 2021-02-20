@@ -107,13 +107,13 @@ importRouter.post("/v1/import/upload", async (req, res) => {
 
     if (user === null) throw Error("user not found");
 
-    const uploads = [];
-    for (let i in files) {
-      const file = files[i];
-      uploads.push(
-        await cloudStorage.uploadFile(user, file.name, file.tempFilePath)
-      );
-    }
+    // const uploads = [];
+    // for (let i in files) {
+    //   const file = files[i];
+    //   uploads.push(
+    //     await cloudStorage.uploadFile(user, file.name, file.tempFilePath)
+    //   );
+    // }
 
     res
       .json({
