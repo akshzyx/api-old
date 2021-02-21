@@ -203,6 +203,16 @@ input::-webkit-inner-spin-button {
 .flex-container {
   display: flex;
   width: 100%;
+  flex-wrap: wrap;
+}
+
+#auth-check,
+#complete {
+  flex: 2;
+}
+
+#upload-files {
+  flex: 3;
 }
 
 #codeBox1 {
@@ -327,4 +337,9 @@ blockquote {
 }
 .article-padding {
   margin-top: 30px;
+}
+
+.red {
+  background-color: #2e1e1e !important;
+  color: rgb(215, 30, 30) !important;
 }

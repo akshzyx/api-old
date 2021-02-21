@@ -151,7 +151,6 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
       importCode: user.importCode,
     });
   } catch (e) {
-    console.log(e);
     res.status(400).json({ success: false, message: e.message });
   }
 });

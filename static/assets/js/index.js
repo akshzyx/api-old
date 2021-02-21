@@ -1,7 +1,7 @@
 class ImportStepper {
   constructor() {
-    this.SERVER_URL = "https://import.spotistats.app/api/v1";
-    // this.SERVER_URL = "http://localhost:3000/api/v1";
+    // this.SERVER_URL = "https://import.spotistats.app/api/v1";
+    this.SERVER_URL = "http://localhost:3000/api/v1";
     this._token = localStorage.getItem("token");
     this.user;
     this.currentStep;
@@ -19,6 +19,9 @@ class ImportStepper {
     if (res.success) {
       this.user = res.data;
       $(".import-code").text(this.user.importCode);
+    } else {
+      delete this._token;
+      delete this.user;
     }
 
     this.currentStep = this._token == undefined ? 0 : 1;
@@ -27,8 +30,15 @@ class ImportStepper {
   }
 
   async updateInterface() {
-    $(".step-current").removeClass("step-current");
+    // $(".step-current").removeClass("step-current");
     $($(".step-hidden")[this.currentStep]).addClass("step-current");
+
+    if (this._token && this.user) {
+      $("#auth-check button").addClass("red");
+      $("#auth-check button").text("Log out");
+      $("#authcode").text(`Logged in as ${this.user.displayName}`);
+      $("#auth-check button").click(() => this.logout());
+    }
 
     const hasFiles = document.getElementById("files").files.length > 0;
     $("#upload").prop("disabled", !hasFiles);
@@ -44,24 +54,28 @@ class ImportStepper {
   }
 
   async step1() {
-    return new Promise((resolve, _) => {
-      const loginWindow = window.open(
-        `${this.SERVER_URL}/auth/redirect`,
-        "_blank",
-        "toolbar=yes,scrollbars=yes,resizable=yes,width=600,height=800"
-      );
+    if (!this._token || !this.user) {
+      return new Promise((resolve, _) => {
+        const loginWindow = window.open(
+          `${this.SERVER_URL}/auth/redirect`,
+          "_blank",
+          "toolbar=yes,scrollbars=yes,resizable=yes,width=600,height=800"
+        );
 
-      loginWindow.onload = () => {
-        const url = loginWindow.location.href;
-        const token = /#complete\?token=(?<token>ey.*)/.exec(url).groups.token;
-        if (token !== undefined) {
-          this._token = token;
-          localStorage.setItem("token", this._token);
-          loginWindow.close();
-          resolve();
-        }
-      };
-    });
+        loginWindow.onload = async () => {
+          const url = loginWindow.location.href;
+          const token = /#complete\?token=(?<token>ey.*)/.exec(url).groups
+            .token;
+          if (token !== undefined) {
+            this._token = token;
+            localStorage.setItem("token", this._token);
+            await this.getUser();
+            loginWindow.close();
+            resolve();
+          }
+        };
+      });
+    }
   }
 
   async step2() {
@@ -90,6 +104,11 @@ class ImportStepper {
       }
       resolve();
     });
+  }
+
+  async logout() {
+    localStorage.removeItem("token");
+    location.reload();
   }
 }
 
