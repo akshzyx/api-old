@@ -7,6 +7,7 @@ import { prisma } from "../core/Prisma";
 
 const importRouter = Router();
 const jwtSecret = process.env.JWT_SECRET as string;
+const apiPrefix = process.env.API_PREFIX;
 const cloudStorage = new CloudStorageService();
 
 importRouter.use(
@@ -20,9 +21,9 @@ importRouter.use(
 
 importRouter.use(express.urlencoded({ extended: true }));
 
-importRouter.use("/v1/import", express.static("static"));
+importRouter.use(`${apiPrefix}/import`, express.static("static"));
 
-importRouter.use("/v1/import/:userid/list", async (req, res) => {
+importRouter.use(`${apiPrefix}/import/:userid/list`, async (req, res) => {
   const importCode = req.headers?.authorization;
   const userId = req.params?.userid;
 
@@ -34,17 +35,46 @@ importRouter.use("/v1/import/:userid/list", async (req, res) => {
   });
 
   if (!user) {
-    return res.status(404).json({ message: "no user found" }).end();
+    return res.status(404).json({ success: false, message: "no user found" });
   }
 
   if (user.importCode != importCode) {
-    return res.status(401).json({ message: "invalid authorization" }).end();
+    return res
+      .status(401)
+      .json({ success: false, message: "invalid authorization" });
   }
 
-  res.json(user);
+  res.json({ success: true, data: user });
 });
 
-importRouter.post("/v1/import/upload", async (req, res) => {
+importRouter.use(`${apiPrefix}/import/userinfo`, async (req, res) => {
+  const token = req.headers?.authorization;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ success: false, message: "invalid authorization" });
+  }
+  let userId;
+  try {
+    const decodedToken = jwt.verify(token, jwtSecret);
+    // @ts-ignore
+    userId = decodedToken.userId;
+  } catch (e) {
+    return res.status(404).json({ success: false, message: e.message });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: "no user found" });
+  }
+
+  res.json({ success: true, data: user });
+});
+
+importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
   try {
     if (req.files === null || !("files" in req.files)) {
       throw Error("missing file(s)");
@@ -115,16 +145,14 @@ importRouter.post("/v1/import/upload", async (req, res) => {
     //   );
     // }
 
-    res
-      .json({
-        success: true,
-        message: `Succesfully imported ${totalStreams} streams!`,
-        importCode: user.importCode,
-      })
-      .end();
+    res.json({
+      success: true,
+      message: `Succesfully imported ${totalStreams} streams!`,
+      importCode: user.importCode,
+    });
   } catch (e) {
     console.log(e);
-    res.status(400).json({ success: false, message: e.message }).end();
+    res.status(400).json({ success: false, message: e.message });
   }
 });
 
