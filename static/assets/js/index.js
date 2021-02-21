@@ -1,7 +1,6 @@
 class ImportStepper {
   constructor() {
-    this.SERVER_URL = "https://import.spotistats.app/api/v1";
-    // this.SERVER_URL = "http://localhost:3000/api/v1";
+    this.SERVER_URL = `${location.origin}/api/v1`;
     this._token = localStorage.getItem("token");
     this.user;
     this.currentStep;
