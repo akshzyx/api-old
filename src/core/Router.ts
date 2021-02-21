@@ -1,6 +1,7 @@
 import express from "express";
 import authRouter from "../routers/auth";
 import importRouter from "../routers/import";
+import statusRouter from "../routers/status";
 
 export default async (): Promise<void> => {
   const app = express();
@@ -9,9 +10,7 @@ export default async (): Promise<void> => {
 
   app.use(importRouter);
 
-  app.get("*", async (req, res) =>
-    res.send("Spotistats API V1\nhttps://github.com/netlob/spotistats-api")
-  );
+  app.use(statusRouter);
 
   app.listen(process.env.API_PORT, () => console.info("Listening"));
 };
