@@ -12,7 +12,6 @@ statusRouter.use(`*`, async (req, res) => {
       data: {
         platform: os.platform(),
         cpuUsage: cpuUsage,
-        countCPUs: os.countCPUs(),
         freeMem: os.freemem(),
         totalmem: os.totalmem(),
         freememPercentage: os.freememPercentage(),
