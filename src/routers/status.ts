@@ -5,6 +5,11 @@ const statusRouter = Router();
 const apiPrefix = process.env.API_PREFIX;
 
 statusRouter.use(`*`, async (req, res) => {
+  if (req.originalUrl !== "/") {
+    if (req.accepts("json")) return res.json({ error: "Not found" });
+    else return res.type("txt").send("Not found");
+  }
+
   os.cpuUsage((cpuUsage) => {
     res.json({
       success: true,
