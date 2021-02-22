@@ -1,6 +1,6 @@
 import { Bucket, Storage, UploadResponse } from "@google-cloud/storage";
 import path from "path";
-import { prisma, User } from "../core/Prisma";
+import { User } from "../core/Prisma";
 
 class CloudStorageService {
   private _importBucket: Bucket;
@@ -23,55 +23,6 @@ class CloudStorageService {
         prefix: `import/${user.id}`,
       })
     )[0].map((file) => file.metadata);
-
-    // if (save) {
-    //   for (let file in files) {
-    //     // @ts-ignore
-    //     file = files[file];
-    //     const {
-    //       // @ts-ignore
-    //       id,
-    //       // @ts-ignore
-    //       selfLink,
-    //       // @ts-ignore
-    //       mediaLink,
-    //       // @ts-ignore
-    //       name,
-    //       // @ts-ignore
-    //       bucket,
-    //       // @ts-ignore
-    //       generation,
-    //       // @ts-ignore
-    //       size,
-    //       // @ts-ignore
-    //       md5Hash,
-    //       // @ts-ignore
-    //       timeCreated,
-    //       // @ts-ignore
-    //       updated,
-    //     } = file;
-
-    //     await prisma.user.update({
-    //       where: { id: user.id },
-    //       data: {
-    //         imports: {
-    //           create: {
-    //             id,
-    //             selfLink,
-    //             mediaLink,
-    //             name,
-    //             bucket,
-    //             generation,
-    //             size,
-    //             md5Hash,
-    //             timeCreated,
-    //             updated,
-    //           },
-    //         },
-    //       },
-    //     });
-    //   }
-    // }
 
     return files;
   }

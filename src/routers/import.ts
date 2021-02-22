@@ -29,7 +29,6 @@ importRouter.use(`${apiPrefix}/import/:userid/list`, async (req, res) => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    // include: { imports: true },
   });
 
   if (!user) {
@@ -49,7 +48,6 @@ importRouter.use(`${apiPrefix}/import/:userid/list`, async (req, res) => {
 
 importRouter.use(`${apiPrefix}/import/userinfo`, async (req, res) => {
   const token = req.headers?.authorization;
-  const includeImports = req.params?.includeImports == "true";
   if (!token) {
     return res
       .status(401)
@@ -66,9 +64,6 @@ importRouter.use(`${apiPrefix}/import/userinfo`, async (req, res) => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    // include: {
-    //   imports: includeImports,
-    // },
   });
 
   if (!user) {
