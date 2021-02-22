@@ -14,7 +14,7 @@ model User {
   displayName    String
   disabled       Boolean
   importCode     String
-  imports        UserImport[]
+  // imports        UserImport[]
   settings       UserSettings @relation(fields: [userSettingsId], references: [id])
   userSettingsId Int
 }
