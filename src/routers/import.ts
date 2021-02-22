@@ -1,9 +1,9 @@
-import jwt from "jsonwebtoken";
 import express, { Router } from "express";
 import fileUpload, { UploadedFile } from "express-fileupload";
 import fs from "fs";
-import CloudStorageService from "../services/cloudStorage";
+import jwt from "jsonwebtoken";
 import { prisma } from "../core/Prisma";
+import CloudStorageService from "../services/cloudStorage";
 
 const importRouter = Router();
 const jwtSecret = process.env.JWT_SECRET as string;
@@ -100,6 +100,7 @@ importRouter.use(`${apiPrefix}/import/userinfo`, async (req, res) => {
 });
 
 importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
+  const filePaths = [];
   try {
     if (req.files === null || !("files" in req.files)) {
       throw Error("missing file(s)");
@@ -128,6 +129,7 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
       }
 
       let content = fs.readFileSync(file.tempFilePath, { encoding: "utf8" });
+      filePaths.push(file.tempFilePath);
 
       content = JSON.parse(content);
       if (content.length > 0 && content.length < 10001) {
@@ -164,16 +166,10 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
 
     if (user === null) throw Error("user not found");
 
-    // const uploads = [];
-    // for (let i in files) {
-    //   const file = files[i];
-    // uploads.push(
-    //   await cloudStorage.uploadFile(user, file.name, file.tempFilePath)
-    // );
-    // }
     const fileName = `import-${user.id}-${new Date().toJSON().slice(0, 10)}`;
     const tempFilePath = `/tmp/${fileName}`;
     fs.writeFileSync(tempFilePath, JSON.stringify(totalContent));
+    filePaths.push(tempFilePath);
     await cloudStorage.uploadFile(user, fileName, tempFilePath);
 
     const importedFiles = await cloudStorage.listFiles(user);
@@ -186,6 +182,12 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
     });
   } catch (e) {
     res.status(400).json({ success: false, message: e.message });
+  } finally {
+    filePaths.forEach((path) => {
+      try {
+        fs.unlinkSync(path);
+      } catch (e) {}
+    });
   }
 });
 
