@@ -65,9 +65,7 @@ importRouter.use(`${apiPrefix}/import/:userid/download`, async (req, res) => {
       .json({ success: false, message: "invalid authorization" });
   }
 
-  const url = await cloudStorage.getDownloadURL(
-    `import/sjoerdgaatwakawaka/${fileName}`
-  );
+  const url = await cloudStorage.getDownloadURL(`import/${userId}/${fileName}`);
 
   res.json({ success: true, data: url });
 });
@@ -166,7 +164,9 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
 
     if (user === null) throw Error("user not found");
 
-    const fileName = `import-${user.id}-${new Date().toJSON().slice(0, 10)}`;
+    const fileName = `import-${user.id}-${new Date()
+      .toJSON()
+      .slice(0, 10)}.json`;
     const tempFilePath = `/tmp/${fileName}`;
     fs.writeFileSync(tempFilePath, JSON.stringify(totalContent));
     filePaths.push(tempFilePath);
