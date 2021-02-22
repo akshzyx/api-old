@@ -119,6 +119,8 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
 
     let totalStreams = 0;
 
+    const totalContent: object[] = [];
+
     files.forEach((file): void => {
       const validName = /StreamingHistory[0-9][0-9]?.json/g.test(file.name);
       if (!validName) {
@@ -138,11 +140,14 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
             "trackName" in e &&
             "msPlayed" in e
           ) {
+            totalContent.push(e);
           } else throw Error(`invalid item (${file.name})`);
         });
       } else
         throw Error(`invalid file length: ${content.length} (${file.name})`);
     });
+
+    // TODO: filter dupes from totalContent
 
     let userId;
     try {
@@ -159,13 +164,17 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
 
     if (user === null) throw Error("user not found");
 
-    const uploads = [];
-    for (let i in files) {
-      const file = files[i];
-      uploads.push(
-        await cloudStorage.uploadFile(user, file.name, file.tempFilePath)
-      );
-    }
+    // const uploads = [];
+    // for (let i in files) {
+    //   const file = files[i];
+    // uploads.push(
+    //   await cloudStorage.uploadFile(user, file.name, file.tempFilePath)
+    // );
+    // }
+    const fileName = `import-${user.id}-${new Date().toJSON().slice(0, 10)}`;
+    const tempFilePath = `/tmp/${fileName}`;
+    fs.writeFileSync(tempFilePath, JSON.stringify(totalContent));
+    await cloudStorage.uploadFile(user, fileName, tempFilePath);
 
     const importedFiles = await cloudStorage.listFiles(user);
 
