@@ -11,13 +11,23 @@ class ImportStepper {
 
   async getUser() {
     this.loader.show();
-    const res = await fetch(`${this.SERVER_URL}/import/userinfo`, {
-      headers: { Authorization: this._token },
-    }).then((res) => res.json());
+    const res = await fetch(
+      `${this.SERVER_URL}/import/userinfo?includeImports=true`,
+      {
+        headers: { Authorization: this._token },
+      }
+    ).then((res) => res.json());
 
     if (res.success) {
       this.user = res.data;
       $(".import-code").text(this.user.importCode);
+
+      if ("imports" in this.user) {
+        this.user.imports.forEach((e) => {
+          $("#prev-imported").show();
+          $("#prev-imported").append(`- ${e.timeCreated} ${e.name}`);
+        });
+      }
     } else {
       delete this._token;
       delete this.user;
@@ -45,9 +55,12 @@ class ImportStepper {
 
   async nextStep() {
     this.loader.show();
-    if (this.currentStep == 0) await this.step1();
-    else if (this.currentStep == 1) await this.step2();
-    this.currentStep++;
+    if (this.currentStep == 0) {
+      await this.step1();
+    } else if (this.currentStep == 1) {
+      await this.step2();
+      this.currentStep++;
+    }
     this.updateInterface();
     this.loader.hide();
   }

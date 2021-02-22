@@ -29,9 +29,7 @@ importRouter.use(`${apiPrefix}/import/:userid/list`, async (req, res) => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      imports: true,
-    },
+    // include: { imports: true },
   });
 
   if (!user) {
@@ -44,11 +42,14 @@ importRouter.use(`${apiPrefix}/import/:userid/list`, async (req, res) => {
       .json({ success: false, message: "invalid authorization" });
   }
 
-  res.json({ success: true, data: user });
+  const files = await cloudStorage.listFiles(user);
+
+  res.json({ success: true, data: { ...user, imports: files } });
 });
 
 importRouter.use(`${apiPrefix}/import/userinfo`, async (req, res) => {
   const token = req.headers?.authorization;
+  const includeImports = req.params?.includeImports == "true";
   if (!token) {
     return res
       .status(401)
@@ -65,6 +66,9 @@ importRouter.use(`${apiPrefix}/import/userinfo`, async (req, res) => {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    // include: {
+    //   imports: includeImports,
+    // },
   });
 
   if (!user) {
@@ -128,27 +132,27 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
       throw Error("invalid auth");
     }
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        imports: true,
-      },
     });
 
     if (user === null) throw Error("user not found");
 
-    // const uploads = [];
-    // for (let i in files) {
-    //   const file = files[i];
-    //   uploads.push(
-    //     await cloudStorage.uploadFile(user, file.name, file.tempFilePath)
-    //   );
-    // }
+    const uploads = [];
+    for (let i in files) {
+      const file = files[i];
+      uploads.push(
+        await cloudStorage.uploadFile(user, file.name, file.tempFilePath)
+      );
+    }
+
+    const importedFiles = await cloudStorage.listFiles(user);
 
     res.json({
       success: true,
       message: `Succesfully imported ${totalStreams} streams!`,
       importCode: user.importCode,
+      user: { ...user, imports: importedFiles },
     });
   } catch (e) {
     res.status(400).json({ success: false, message: e.message });

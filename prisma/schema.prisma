@@ -19,20 +19,20 @@ model User {
   userSettingsId Int
 }
 
-model UserImport {
-  id          String  @id
-  selfLink    String
-  mediaLink   String
-  name        String
-  bucket      String
-  generation  String
-  size        String
-  md5Hash     String
-  timeCreated String
-  updated     String
-  User        User?   @relation(fields: [userId], references: [id])
-  userId      String?
-}
+// model UserImport {
+//   id          String  @id
+//   selfLink    String
+//   mediaLink   String
+//   name        String
+//   bucket      String
+//   generation  String
+//   size        String
+//   md5Hash     String
+//   timeCreated String
+//   updated     String
+//   User        User?   @relation(fields: [userId], references: [id])
+//   userId      String?
+// }
 
 model UserSettings {
   id                    Int      @id @default(autoincrement())
