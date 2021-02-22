@@ -42,6 +42,17 @@ class CloudStorageService {
 
     return response;
   }
+
+  public async getDownloadURL(fileName: string) {
+    const expiresAt: number = Date.now() + 15 * 60 * 1000;
+    const [url] = await this._importBucket.file(fileName).getSignedUrl({
+      version: "v4",
+      action: "read",
+      expires: expiresAt,
+    });
+
+    return { url, expiresAt };
+  }
 }
 
 export default CloudStorageService;

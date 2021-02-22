@@ -46,6 +46,32 @@ importRouter.use(`${apiPrefix}/import/:userid/list`, async (req, res) => {
   res.json({ success: true, data: { ...user, imports: files } });
 });
 
+importRouter.use(`${apiPrefix}/import/:userid/download`, async (req, res) => {
+  const importCode = req.headers?.authorization;
+  const userId = req.params?.userid;
+  const fileName = req.query?.fileName;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: "no user found" });
+  }
+
+  if (user.importCode != importCode) {
+    return res
+      .status(401)
+      .json({ success: false, message: "invalid authorization" });
+  }
+
+  const url = await cloudStorage.getDownloadURL(
+    `import/sjoerdgaatwakawaka/${fileName}`
+  );
+
+  res.json({ success: true, data: url });
+});
+
 importRouter.use(`${apiPrefix}/import/userinfo`, async (req, res) => {
   const token = req.headers?.authorization;
   if (!token) {
