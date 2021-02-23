@@ -69,6 +69,22 @@ main.container {
   margin-left: auto;
   margin-top: 10px;
 }
+
+@media (max-width: 768px) {
+  .step-hidden {
+    min-width: 90vw;
+    margin-bottom: 30px;
+  }
+  .img-step {
+    width: 100vw !important;
+    left: -17.5px !important;
+  }
+  .header-container {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+  }
+}
 @media (min-width: 768px) {
   .container {
     width: 750px;
@@ -78,6 +94,9 @@ main.container {
   .container {
     width: 970px;
     margin-top: 30px;
+  }
+  .step-hidden {
+    width: unset !important;
   }
 }
 @media (min-width: 1200px) {
