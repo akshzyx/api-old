@@ -11,23 +11,14 @@ class ImportStepper {
 
   async getUser() {
     this.loader.show();
-    const res = await fetch(
-      `${this.SERVER_URL}/import/userinfo?includeImports=true`,
-      {
-        headers: { Authorization: this._token },
-      }
-    ).then((res) => res.json());
+    const res = await fetch(`${this.SERVER_URL}/import/userinfo`, {
+      headers: { Authorization: this._token },
+    }).then((res) => res.json());
 
     if (res.success) {
       this.user = res.data;
       $(".import-code").text(this.user.importCode);
-
-      if ("imports" in this.user) {
-        this.user.imports.forEach((e) => {
-          $("#prev-imported").show();
-          $("#prev-imported").append(`- ${e.timeCreated} ${e.name}`);
-        });
-      }
+      // this.listImports();
     } else {
       delete this._token;
       delete this.user;
@@ -36,6 +27,24 @@ class ImportStepper {
     this.currentStep = this._token == undefined ? 0 : 1;
     this.updateInterface();
     this.loader.hide();
+  }
+
+  async listImports() {
+    const res = await fetch(`${this.SERVER_URL}/import/${this.user.id}/list`, {
+      headers: { Authorization: this.user.importCode },
+    }).then((res) => res.json());
+
+    if (res.success === true && res.data?.imports?.length > 0) {
+      res.data.imports.forEach((e) => {
+        console.log(e);
+        const created = new Date(e.timeCreated);
+        $("#prev-imported").show();
+        $("#prev-imported").append(
+          `<b>${created.toLocaleDateString()}</b><br>`
+        );
+        $("#prev-imported").append(`- ${e.name}`);
+      });
+    }
   }
 
   async updateInterface() {
