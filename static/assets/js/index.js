@@ -5,6 +5,7 @@ class ImportStepper {
     this.user;
     this.currentStep;
     this.loader = new Loader();
+    this.modalController = new ModalController();
 
     this.getUser();
   }
@@ -120,8 +121,15 @@ class ImportStepper {
       if (res.success) {
         $("#streams-imported").text(res.message);
         $(".import-code").text(res.importCode);
+        this.modalController.openModal(
+          "Success",
+          `${res.message} Please follow the instructions of the next step to download the data to your device.`
+        );
       } else {
-        alert(JSON.parse(res.responseText).message);
+        this.modalController.openModal(
+          "Error",
+          JSON.parse(res.responseText).message
+        );
       }
       resolve();
     });
@@ -140,6 +148,32 @@ class Loader {
 
   hide() {
     $("#overlay").hide();
+  }
+}
+
+class ModalController {
+  constructor() {
+    this.template = $("#modal-template").html();
+  }
+
+  openModal(title, body) {
+    var modal = $(this.template);
+
+    modal.find(".title").text(title);
+    modal.find(".body").text(body);
+
+    modal.find("span.close").on("click", function () {
+      $(this).parent().remove();
+    });
+
+    modal.on("click", function (e) {
+      if (e.target == this) {
+        $(this).remove();
+      }
+    });
+
+    $("body").append(modal);
+    modal.show();
   }
 }
 
