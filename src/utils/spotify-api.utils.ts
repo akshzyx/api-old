@@ -54,7 +54,6 @@ export async function getUserSpotifyApi(
               settings: {
                 update: {
                   accessToken: refreshResult.body.access_token,
-                  refreshToken: refreshResult.body.refresh_token,
                   accessTokenExpiration: expirationDate,
                 },
               },
