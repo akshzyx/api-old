@@ -4,6 +4,7 @@ import fs from "fs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../core/Prisma";
 import CloudStorageService from "../services/cloudStorage";
+import windows1252 from "windows-1252";
 
 const importRouter = Router();
 const jwtSecret = process.env.JWT_SECRET as string;
