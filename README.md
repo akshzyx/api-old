@@ -1,5 +1,7 @@
 # Spotistats Plus API
 
+[![CI/CD](https://github.com/Netlob/spotistats-api/actions/workflows/main.yml/badge.svg)](https://github.com/Netlob/spotistats-api/actions/workflows/main.yml)
+
 > API for advanced Spotify stats (only for Spotistats Plus users)
 
 ## Spotistats
