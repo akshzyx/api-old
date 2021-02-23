@@ -49,7 +49,7 @@ export async function getUserSpotifyApi(
           );
 
           prisma.user.update({
-            where: user,
+            where: { id: user.id },
             data: {
               settings: {
                 update: {
