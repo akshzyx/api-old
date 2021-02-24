@@ -23,5 +23,6 @@ model UserSettings {
   refreshToken          String
   accessToken           String
   accessTokenExpiration DateTime
+  sharesStats           Boolean  @default(false)
   User                  User[]
 }
