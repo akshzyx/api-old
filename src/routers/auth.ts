@@ -25,28 +25,30 @@ const scopes = [
   "user-follow-modify",
 ];
 const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
+const spotistatsRedirectUri = process.env.SPOTISTATS_AUTH_REDIRECT_URL;
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecrect = process.env.SPOTIFY_CLIENT_SECRET;
 const serverUrl = process.env.SERVER_URL;
 const apiPrefix = process.env.API_PREFIX;
 
-const getAuthorizeURL = () => {
+const getAuthorizeURL = (state: string) => {
   const spotifyApi = new SpotifyWebApi({
     redirectUri,
     clientSecret: clientSecrect,
     clientId,
   });
-  const state = "spotify_auth_state";
-  return spotifyApi.createAuthorizeURL(scopes, state);
+  return spotifyApi.createAuthorizeURL(scopes, state, false);
 };
 
 authRouter.get(`${apiPrefix}/auth/redirect`, (req, res) => {
-  const authorizeURL = getAuthorizeURL();
+  const state = req.query?.state?.toString() ?? "state";
+  const authorizeURL = getAuthorizeURL(state);
   res.redirect(301, authorizeURL);
 });
 
 authRouter.get(`${apiPrefix}/auth/redirect/url`, (req, res) => {
-  const authorizeURL = getAuthorizeURL();
+  const state = req.query?.state?.toString() ?? "state";
+  const authorizeURL = getAuthorizeURL(state);
   res.send({ authUrl: authorizeURL });
 });
 
@@ -96,7 +98,9 @@ authRouter.get(
       const jwtSecret = process.env.JWT_SECRET as string;
       const token = jwt.sign({ userId, displayName }, jwtSecret);
 
-      res.status(200).redirect(`${serverUrl}/import#complete?token=${token}`);
+      res
+        .status(200)
+        .redirect(`${spotistatsRedirectUri}#complete?token=${token}`);
       resetSpotifyApiTokens(spotifyApi);
     } catch (e) {
       res.status(500).send(e.toString());
