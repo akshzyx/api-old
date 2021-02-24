@@ -7,16 +7,22 @@ import { prisma, User } from "../core/Prisma";
 const authRouter = Router();
 
 const scopes = [
-  "user-read-recently-played",
-  "user-top-read",
-  "playlist-modify-public",
-  "playlist-modify-private",
-  "playlist-read-private",
-  "playlist-read-collaborative",
-  "user-follow-read",
-  "user-library-read",
+  "ugc-image-upload",
+  "user-read-playback-state",
+  "user-read-currently-playing",
   "user-read-email",
   "user-read-private",
+  "playlist-read-collaborative",
+  "playlist-modify-public",
+  "playlist-read-private",
+  "playlist-modify-private",
+  "user-library-modify",
+  "user-library-read",
+  "user-top-read",
+  "user-read-playback-position",
+  "user-read-recently-played",
+  "user-follow-read",
+  "user-follow-modify",
 ];
 const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
 const clientId = process.env.SPOTIFY_CLIENT_ID;
