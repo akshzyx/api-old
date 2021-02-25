@@ -1,10 +1,13 @@
-import express, { Router, Request, Response } from "express";
-import SpotifyWebApi from "spotify-web-api-node";
+import express, { Request, Response, Router } from "express";
 import jwt from "jsonwebtoken";
-import { resetSpotifyApiTokens } from "../utils/spotify-api.utils";
-import { prisma, User } from "../core/Prisma";
 import fetch from "node-fetch";
+import SpotifyWebApi from "spotify-web-api-node";
 import { URLSearchParams } from "url";
+import { prisma, User } from "../core/Prisma";
+import {
+  getUserSpotifyApi,
+  resetSpotifyApiTokens,
+} from "../utils/spotify-api.utils";
 
 const authRouter = Router();
 
@@ -34,6 +37,7 @@ const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecrect = process.env.SPOTIFY_CLIENT_SECRET;
 const serverUrl = process.env.SERVER_URL;
 const apiPrefix = process.env.API_PREFIX;
+const jwtSecret = process.env.JWT_SECRET as string;
 
 const getAuthorizeURL = (state: string) => {
   const spotifyApi = new SpotifyWebApi({
@@ -76,6 +80,53 @@ authRouter.post(`${apiPrefix}/auth/token`, async (req, res) => {
   });
 
   saveUser(spotifyApi, data, res, false);
+});
+
+authRouter.get(`${apiPrefix}/auth/token`, async (req, res) => {
+  const token: string = req.headers?.authorization as string;
+  let userId: string;
+  try {
+    const decodedToken = jwt.verify(token, jwtSecret);
+    // @ts-ignore
+    userId = decodedToken.userId;
+  } catch (e) {
+    console.log(e);
+    return res.status(404).json({ success: false, message: e.message });
+  }
+
+  await getUserSpotifyApi(userId); // refresh the tokens (if necessary)
+
+  const user: User = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { settings: true },
+  });
+
+  // @ts-ignore
+  delete user.settings.refreshToken;
+
+  res.status(200).json({ success: true, data: user });
+});
+
+authRouter.post(`${apiPrefix}/auth/token/refresh`, async (req, res) => {
+  const token: string = req.body?.refresh_token as string;
+  let userId: string;
+  try {
+    const decodedToken = jwt.verify(token, jwtSecret);
+    // @ts-ignore
+    userId = decodedToken.userId;
+  } catch (e) {
+    console.log(e);
+    return res.status(404).json({ success: false, message: e.message });
+  }
+
+  const spotifyApi: SpotifyWebApi = await getUserSpotifyApi(userId);
+
+  res.status(200).json({
+    access_token: spotifyApi.getCredentials().accessToken,
+    refresh_token: token,
+    token_type: "Bearer",
+    expires_in: 3550,
+  });
 });
 
 authRouter.get(`${apiPrefix}/auth/redirect`, (req, res) => {
@@ -122,40 +173,58 @@ const saveUser = async (
   const userData = await spotifyApi.getMe();
   const userId = userData.body.id;
   const displayName = userData.body.display_name as string;
-  const foundUser = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { settings: true },
-  });
-
   let user: User;
-  if (!foundUser) {
-    user = await prisma.user.create({
-      data: {
-        id: userId,
-        displayName: displayName,
-        disabled: false,
-        importCode: Math.floor(1000 + Math.random() * 9000).toString(),
-        settings: {
-          create: {
-            refreshToken: body.refresh_token,
-            accessToken: body.access_token,
-            accessTokenExpiration: expiryDate,
-          },
+  user = await prisma.user.upsert({
+    where: { id: userId },
+    update: {
+      settings: {
+        update: {
+          refreshToken: body.refresh_token,
+          accessToken: body.access_token,
+          accessTokenExpiration: expiryDate,
         },
       },
-    });
-  }
+    },
+    create: {
+      id: userId,
+      displayName: displayName,
+      disabled: false,
+      importCode: Math.floor(1000 + Math.random() * 9000).toString(),
+      settings: {
+        create: {
+          refreshToken: body.refresh_token,
+          accessToken: body.access_token,
+          accessTokenExpiration: expiryDate,
+        },
+      },
+    },
+    include: {
+      settings: true,
+    },
+  });
 
-  const jwtSecret = process.env.JWT_SECRET as string;
   const token = jwt.sign({ userId, displayName }, jwtSecret);
+
+  const authResponse = new _AuthResponse(user, token);
+
   if (redirect) {
     res
       .status(200)
       .redirect(`${spotistatsRedirectUri}#complete?token=${token}`);
   } else {
-    res.status(200).json({ success: true, data: user });
+    res.status(200).json({ success: true, data: authResponse });
   }
   resetSpotifyApiTokens(spotifyApi);
 };
 
 export default authRouter;
+
+class _AuthResponse {
+  user: User;
+  apiToken: string;
+
+  constructor(user, apiToken) {
+    this.user = user;
+    this.apiToken = apiToken;
+  }
+}

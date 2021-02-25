@@ -42,25 +42,31 @@ export async function getUserSpotifyApi(
 
     if (new Date(user.settings.accessTokenExpiration).getTime() < Date.now()) {
       spotifyApi.refreshAccessToken().then(
-        (refreshResult) => {
-          // Update token in DB
+        async (refreshResult) => {
+          spotifyApi.setAccessToken(refreshResult.body.access_token);
+          // @ts-ignore
+          spotifyApi.setRefreshToken(refreshResult.body.refresh_token);
+
           const expirationDate = new Date(
             Date.now() + refreshResult.body.expires_in * 1000
           );
 
-          prisma.user.update({
+          await prisma.user.update({
             where: { id: user.id },
             data: {
               settings: {
                 update: {
                   accessToken: refreshResult.body.access_token,
+                  // @ts-ignore
+                  refreshToken: refreshResult.body.refresh_token,
                   accessTokenExpiration: expirationDate,
                 },
               },
             },
           });
 
-          spotifyApi.setAccessToken(refreshResult.body.access_token);
+          console.log("refreshed");
+
           resolve(spotifyApi);
         },
         (refreshError) => {
