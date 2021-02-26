@@ -65,8 +65,6 @@ export async function getUserSpotifyApi(
             },
           });
 
-          console.log("refreshed");
-
           resolve(spotifyApi);
         },
         (refreshError) => {

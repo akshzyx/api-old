@@ -90,7 +90,6 @@ authRouter.get(`${apiPrefix}/auth/token`, async (req, res) => {
     // @ts-ignore
     userId = decodedToken.userId;
   } catch (e) {
-    console.log(e);
     return res.status(404).json({ success: false, message: e.message });
   }
 
@@ -115,7 +114,6 @@ authRouter.post(`${apiPrefix}/auth/token/refresh`, async (req, res) => {
     // @ts-ignore
     userId = decodedToken.userId;
   } catch (e) {
-    console.log(e);
     return res.status(404).json({ success: false, message: e.message });
   }
 
@@ -155,7 +153,6 @@ authRouter.get(
       const data = await spotifyApi.authorizationCodeGrant(code);
       saveUser(spotifyApi, data.body, res, true);
     } catch (e) {
-      console.log(e);
       res.status(500).send(e.toString());
     }
   }
