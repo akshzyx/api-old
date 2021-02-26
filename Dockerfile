@@ -3,8 +3,10 @@ ARG NODE_ENV
 ENV NODE_ENV $NODE_ENV
 
 WORKDIR /usr/local/spotistats-api
-COPY package.json package-lock.json ./
+RUN mkdir dist
 
+COPY package.json package-lock.json ./
+COPY package.json ./dist
 COPY . ./
 
 # Install dependenices
