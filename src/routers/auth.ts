@@ -153,8 +153,9 @@ authRouter.get(
       });
 
       const data = await spotifyApi.authorizationCodeGrant(code);
-      saveUser(spotifyApi, data, res, true);
+      saveUser(spotifyApi, data.body, res, true);
     } catch (e) {
+      console.log(e);
       res.status(500).send(e.toString());
     }
   }
@@ -208,9 +209,7 @@ const saveUser = async (
   const authResponse = new _AuthResponse(user, token);
 
   if (redirect) {
-    res
-      .status(200)
-      .redirect(`${spotistatsRedirectUri}#complete?token=${token}`);
+    res.status(200).redirect(`${serverUrl}/import#complete?token=${token}`);
   } else {
     res.status(200).json({ success: true, data: authResponse });
   }
