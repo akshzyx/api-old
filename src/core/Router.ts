@@ -15,5 +15,5 @@ export default async (): Promise<void> => {
 
   app.use(statusRouter);
 
-  app.listen(process.env.API_PORT, () => console.info("Listening"));
+  app.listen(process.env.API_PORT || 3000, () => console.info("Listening"));
 };
