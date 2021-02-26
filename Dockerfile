@@ -8,7 +8,7 @@ COPY package.json package-lock.json ./
 COPY . ./
 
 # Install dependenices
-RUN npm install --only=prod
+RUN npm install
 
 # Generate Prisma typings
 RUN npx prisma generate
