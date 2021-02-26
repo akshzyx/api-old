@@ -126,10 +126,7 @@ class ImportStepper {
           `${res.message} Please follow the instructions of the next step to download the data to your device.`
         );
       } else {
-        this.modalController.openModal(
-          "Error",
-          JSON.parse(res.responseText).message
-        );
+        this.modalController.openModal("Error", res.message);
       }
       resolve();
     });
