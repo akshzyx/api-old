@@ -14,7 +14,7 @@ RUN npm install
 RUN npx prisma generate
 
 # Compile everything
-RUN node compile
+RUN npm run compile
 
 EXPOSE 3000
 
