@@ -13,7 +13,7 @@ const cloudStorage = new CloudStorageService();
 
 importRouter.use(
   fileUpload({
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: 50 * 1024 * 1024 },
     useTempFiles: true,
     tempFileDir: "/tmp/",
     abortOnLimit: true,
