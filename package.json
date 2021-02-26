@@ -8,8 +8,8 @@
     "compile": "tsc -p .",
     "compile:watch": "tsc -p . -w",
     "start:dev": "nodemon -r dotenv/config src/index.js dotenv_config_path=./src/config/.env.development",
-    "start:prod": "docker-compose -f docker/prod.yml up -d",
-    "start:db": "docker-compose -f docker/db.yml up -d",
+    "start:prod": "docker-compose -p spotistats -f docker/prod.yml up -d",
+    "start:db": "docker-compose -p spotistats -f docker/db.yml up -d",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Sjoerd Bolten",
