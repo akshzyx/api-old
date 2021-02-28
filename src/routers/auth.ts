@@ -53,57 +53,60 @@ authRouter.get(`${apiPrefix}/auth/client`, (req, res) => {
 });
 
 authRouter.post(`${apiPrefix}/auth/token`, async (req, res) => {
-  const code: string = req.body?.code as string;
-  const codeVerifier: string = req.body?.code_verifier as string;
+  try {
+    const code: string = req.body?.code as string;
+    const codeVerifier: string = req.body?.code_verifier as string;
 
-  const params = new URLSearchParams();
-  params.append("grant_type", "authorization_code");
-  params.append("code", code);
-  params.append("redirect_uri", spotistatsRedirectUri);
-  params.append("code_verifier", codeVerifier);
+    const params = new URLSearchParams();
+    params.append("grant_type", "authorization_code");
+    params.append("code", code);
+    params.append("redirect_uri", spotistatsRedirectUri);
+    params.append("code_verifier", codeVerifier);
 
-  const data = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${Buffer.from(
-        clientId + ":" + clientSecrect
-      ).toString("base64")}`,
-    },
-    body: params,
-  }).then((res) => res.json());
+    const data = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${Buffer.from(
+          clientId + ":" + clientSecrect
+        ).toString("base64")}`,
+      },
+      body: params,
+    }).then((res) => res.json());
 
-  const spotifyApi = new SpotifyWebApi({
-    redirectUri: spotistatsRedirectUri,
-    clientSecret: clientSecrect,
-    clientId,
-  });
+    const spotifyApi = new SpotifyWebApi({
+      redirectUri: spotistatsRedirectUri,
+      clientSecret: clientSecrect,
+      clientId,
+    });
 
-  saveUser(spotifyApi, data, res, false);
+    saveUser(spotifyApi, data, res, false);
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e });
+  }
 });
 
 authRouter.get(`${apiPrefix}/auth/token`, async (req, res) => {
-  const token: string = req.headers?.authorization as string;
-  let userId: string;
   try {
+    const token: string = req.headers?.authorization as string;
     const decodedToken = jwt.verify(token, jwtSecret);
     // @ts-ignore
-    userId = decodedToken.userId;
+    let userId = decodedToken.userId;
+
+    await getUserSpotifyApi(userId); // refresh the tokens (if necessary)
+
+    const user: User = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { settings: true },
+    });
+
+    // @ts-ignore
+    delete user.settings.refreshToken;
+
+    res.status(200).json({ success: true, data: user });
   } catch (e) {
-    return res.status(500).json({ success: false, message: e.message });
+    return res.status(500).json({ success: false, message: e });
   }
-
-  await getUserSpotifyApi(userId); // refresh the tokens (if necessary)
-
-  const user: User = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { settings: true },
-  });
-
-  // @ts-ignore
-  delete user.settings.refreshToken;
-
-  res.status(200).json({ success: true, data: user });
 });
 
 authRouter.post(`${apiPrefix}/auth/token/refresh`, async (req, res) => {
@@ -136,7 +139,7 @@ authRouter.get(`${apiPrefix}/auth/redirect`, (req, res) => {
 authRouter.get(`${apiPrefix}/auth/redirect/url`, (req, res) => {
   const state = req.query?.state?.toString() ?? "state";
   const authorizeURL = getAuthorizeURL(state);
-  res.send({ authUrl: authorizeURL });
+  return res.status(200).json({ success: true, data: authorizeURL });
 });
 
 authRouter.get(
@@ -153,7 +156,7 @@ authRouter.get(
       const data = await spotifyApi.authorizationCodeGrant(code);
       saveUser(spotifyApi, data.body, res, true);
     } catch (e) {
-      res.status(500).send(e.toString());
+      return res.status(500).json({ success: false, message: e });
     }
   }
 );
@@ -164,53 +167,57 @@ const saveUser = async (
   res: Response,
   redirect: boolean
 ) => {
-  spotifyApi.setAccessToken(body.access_token);
-  spotifyApi.setRefreshToken(body.refresh_token);
-  const expiryDate = new Date(Date.now() + body.expires_in * 1000);
+  try {
+    spotifyApi.setAccessToken(body.access_token);
+    spotifyApi.setRefreshToken(body.refresh_token);
+    const expiryDate = new Date(Date.now() + body.expires_in * 1000);
 
-  const userData = await spotifyApi.getMe();
-  const userId = userData.body.id;
-  const displayName = userData.body.display_name as string;
-  let user: User;
-  user = await prisma.user.upsert({
-    where: { id: userId },
-    update: {
-      settings: {
-        update: {
-          refreshToken: body.refresh_token,
-          accessToken: body.access_token,
-          accessTokenExpiration: expiryDate,
+    const userData = await spotifyApi.getMe();
+    const userId = userData.body.id;
+    const displayName = userData.body.display_name as string;
+    let user: User;
+    user = await prisma.user.upsert({
+      where: { id: userId },
+      update: {
+        settings: {
+          update: {
+            refreshToken: body.refresh_token,
+            accessToken: body.access_token,
+            accessTokenExpiration: expiryDate,
+          },
         },
       },
-    },
-    create: {
-      id: userId,
-      displayName: displayName,
-      disabled: false,
-      importCode: Math.floor(1000 + Math.random() * 9000).toString(),
-      settings: {
-        create: {
-          refreshToken: body.refresh_token,
-          accessToken: body.access_token,
-          accessTokenExpiration: expiryDate,
+      create: {
+        id: userId,
+        displayName: displayName,
+        disabled: false,
+        importCode: Math.floor(1000 + Math.random() * 9000).toString(),
+        settings: {
+          create: {
+            refreshToken: body.refresh_token,
+            accessToken: body.access_token,
+            accessTokenExpiration: expiryDate,
+          },
         },
       },
-    },
-    include: {
-      settings: true,
-    },
-  });
+      include: {
+        settings: true,
+      },
+    });
 
-  const token = jwt.sign({ userId, displayName }, jwtSecret);
+    const token = jwt.sign({ userId, displayName }, jwtSecret);
 
-  const authResponse = new _AuthResponse(user, token);
+    const authResponse = new _AuthResponse(user, token);
 
-  if (redirect) {
-    res.status(200).redirect(`${serverUrl}/import#complete?token=${token}`);
-  } else {
-    res.status(200).json({ success: true, data: authResponse });
+    if (redirect) {
+      res.status(200).redirect(`${serverUrl}/import#complete?token=${token}`);
+    } else {
+      res.status(200).json({ success: true, data: authResponse });
+    }
+    resetSpotifyApiTokens(spotifyApi);
+  } catch (e) {
+    return res.status(500).json({ success: false, message: e });
   }
-  resetSpotifyApiTokens(spotifyApi);
 };
 
 export default authRouter;
