@@ -90,7 +90,7 @@ authRouter.get(`${apiPrefix}/auth/token`, async (req, res) => {
     // @ts-ignore
     userId = decodedToken.userId;
   } catch (e) {
-    return res.status(404).json({ success: false, message: e.message });
+    return res.status(500).json({ success: false, message: e.message });
   }
 
   await getUserSpotifyApi(userId); // refresh the tokens (if necessary)
@@ -107,24 +107,24 @@ authRouter.get(`${apiPrefix}/auth/token`, async (req, res) => {
 });
 
 authRouter.post(`${apiPrefix}/auth/token/refresh`, async (req, res) => {
-  const token: string = req.body?.refresh_token as string;
-  let userId: string;
   try {
+    const token: string = req.body?.refresh_token as string;
+
     const decodedToken = jwt.verify(token, jwtSecret);
     // @ts-ignore
-    userId = decodedToken.userId;
+    let userId = decodedToken.userId;
+
+    const spotifyApi: SpotifyWebApi = await getUserSpotifyApi(userId);
+
+    res.status(200).json({
+      access_token: spotifyApi.getCredentials().accessToken,
+      refresh_token: token,
+      token_type: "Bearer",
+      expires_in: 3550,
+    });
   } catch (e) {
-    return res.status(404).json({ success: false, message: e.message });
+    return res.status(404).json({ success: false, message: e });
   }
-
-  const spotifyApi: SpotifyWebApi = await getUserSpotifyApi(userId);
-
-  res.status(200).json({
-    access_token: spotifyApi.getCredentials().accessToken,
-    refresh_token: token,
-    token_type: "Bearer",
-    expires_in: 3550,
-  });
 });
 
 authRouter.get(`${apiPrefix}/auth/redirect`, (req, res) => {
