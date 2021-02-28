@@ -8,8 +8,12 @@ statusRouter.use(health.ping(`${apiPrefix}/ping`));
 
 statusRouter.use("*", async (req, res) => {
   if (req.accepts("json"))
-    return res.json({ error: "Not found", url: req.originalUrl });
-  else return res.type("txt").send(`Not found (url: ${req.originalUrl})`);
+    return res.status(404).json({ error: "Not found", url: req.originalUrl });
+  else
+    return res
+      .status(404)
+      .type("txt")
+      .send(`Not found (url: ${req.originalUrl})`);
 });
 
 export default statusRouter;
