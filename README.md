@@ -19,10 +19,10 @@ Check out Spotistats for Spotify on the [Apple App Store](https://apps.apple.com
 ```bash
 cd spotistats-api
 # edit .env.example and rename it to .env
-npm install
+yarn install
 yarn compile
-docker-compose up
-npx prisma migrate dev --preview-feature # generates types and pushes schema to db.
+yarn start:db
+yarn migrate # generates types and pushes schema to db.
 node dist/
 ```
 

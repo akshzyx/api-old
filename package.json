@@ -10,6 +10,7 @@
     "start:dev": "nodemon -r dotenv/config src/index.js dotenv_config_path=./src/config/.env.development",
     "start:prod": "docker-compose -p spotistats -f docker/prod.yml up -d",
     "start:db": "docker-compose -p spotistats -f docker/db.yml up -d",
+    "migrate": "prisma migrate dev --preview-feature",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Sjoerd Bolten",
