@@ -8,6 +8,7 @@ import {
   getUserSpotifyApi,
   resetSpotifyApiTokens,
 } from "../utils/spotify-api.utils";
+import { decrypt, encrypt } from "../misc/crypto";
 
 const authRouter = Router();
 
@@ -38,6 +39,7 @@ const clientSecrect = process.env.SPOTIFY_CLIENT_SECRET;
 const serverUrl = process.env.SERVER_URL;
 const apiPrefix = process.env.API_PREFIX;
 const jwtSecret = process.env.JWT_SECRET as string;
+const encryptionSecret = process.env.ENCRYPTION_SECRET as string;
 
 const getAuthorizeURL = (state: string) => {
   const spotifyApi = new SpotifyWebApi({
@@ -95,13 +97,19 @@ authRouter.get(`${apiPrefix}/auth/token`, async (req, res) => {
 
     await getUserSpotifyApi(userId); // refresh the tokens (if necessary)
 
-    const user: User = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { settings: true },
     });
 
-    // @ts-ignore
+    if (!user)
+      return res
+        .status(404)
+        .json({ success: false, message: "user not found" });
+
     delete user.settings.refreshToken;
+
+    user.settings.accessToken = decrypt(user.settings.accessToken);
 
     res.status(200).json({ success: true, data: user });
   } catch (e) {
@@ -175,8 +183,15 @@ const saveUser = async (
     const userData = await spotifyApi.getMe();
     const userId = userData.body.id;
     const displayName = userData.body.display_name as string;
-    let user: User;
-    user = await prisma.user.upsert({
+
+    // @ts-ignore
+    body.refresh_token = encrypt(
+      // @ts-ignore
+      body.refresh_token
+    );
+    body.access_token = encrypt(body.access_token);
+
+    let user = await prisma.user.upsert({
       where: { id: userId },
       update: {
         settings: {
@@ -204,6 +219,9 @@ const saveUser = async (
         settings: true,
       },
     });
+
+    user.settings.refreshToken = decrypt(user.settings.refreshToken);
+    user.settings.accessToken = decrypt(user.settings.accessToken);
 
     const token = jwt.sign({ userId, displayName }, jwtSecret);
 

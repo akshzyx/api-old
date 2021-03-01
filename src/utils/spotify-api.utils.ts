@@ -1,5 +1,11 @@
 import SpotifyWebApi from "spotify-web-api-node";
+import { decrypt } from "../misc/crypto";
 import { prisma } from "../core/Prisma";
+
+const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
+const clientId = process.env.SPOTIFY_CLIENT_ID;
+const clientSecrect = process.env.SPOTIFY_CLIENT_SECRET;
+const encryptionSecret = process.env.ENCRYPTION_SECRET as string;
 
 /**
  * Resets the tokens for a given SpotifyWebApi oject
@@ -27,10 +33,6 @@ export async function getUserSpotifyApi(
     throw "user does not exist";
   }
 
-  const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
-  const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const clientSecrect = process.env.SPOTIFY_CLIENT_SECRET;
-
   const spotifyApi = new SpotifyWebApi({
     redirectUri,
     clientSecret: clientSecrect,
@@ -38,6 +40,7 @@ export async function getUserSpotifyApi(
   });
 
   return new Promise((resolve, reject) => {
+    user.settings.refreshToken = decrypt(user.settings.refreshToken);
     spotifyApi.setRefreshToken(user.settings.refreshToken);
 
     if (new Date(user.settings.accessTokenExpiration).getTime() < Date.now()) {
@@ -49,6 +52,15 @@ export async function getUserSpotifyApi(
 
           const expirationDate = new Date(
             Date.now() + refreshResult.body.expires_in * 1000
+          );
+
+          // @ts-ignore
+          refreshResult.body.refresh_token = decrypt(
+            // @ts-ignore
+            refreshResult.body.refresh_token
+          );
+          refreshResult.body.access_token = decrypt(
+            refreshResult.body.access_token
           );
 
           await prisma.user.update({
@@ -72,6 +84,7 @@ export async function getUserSpotifyApi(
         }
       );
     } else {
+      user.settings.accessToken = decrypt(user.settings.accessToken);
       spotifyApi.setAccessToken(user.settings.accessToken);
       resolve(spotifyApi);
     }
