@@ -23,9 +23,11 @@
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
     "express-ping": "^0.4.2",
+    "express-prometheus-middleware": "^1.1.0",
     "jsonwebtoken": "^8.5.1",
     "node-fetch": "^2.6.1",
     "pg": "^8.5.1",
+    "prom-client": "^13.1.0",
     "reflect-metadata": "^0.1.13",
     "spotify-web-api-node": "^5.0.2",
     "windows-1252": "^1.0.0"
