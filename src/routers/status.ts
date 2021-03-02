@@ -4,7 +4,11 @@ import health from "express-ping";
 const statusRouter = Router();
 const apiPrefix = process.env.API_PREFIX;
 
-statusRouter.use(health.ping(`${apiPrefix}/ping`));
+statusRouter.use(health.ping(`${apiPrefix}/health`));
+
+statusRouter.use(`${apiPrefix}/ping`, (req, res) =>
+  res.json({ success: true })
+);
 
 statusRouter.use("*", async (req, res) => {
   if (req.accepts("json"))
