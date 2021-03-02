@@ -25,7 +25,7 @@
       <div class="loader"></div>
     </div>
     <header class="container header-container">
-      <h1 class="float-left">Import data</h1>
+      <h1 class="float-left" id="page-title">Import data</h1>
       <img
         src="assets/image/icon.png"
         alt="Spotistats Logo"
@@ -35,7 +35,9 @@
       />
     </header>
     <main class="container">
-      <section class="flex-container">
+      <br class="guide-hide" />
+      <br class="guide-hide" />
+      <section class="flex-container guide-hide">
         <div id="auth-check" class="step-hidden step-current">
           <div class="text-center">
             <div class="authcode-wrapper">
@@ -59,9 +61,10 @@
           id="upload-files"
           class="step-hidden"
         >
-          <h1>Select your all .JSON's files</h1>
+          <h1>Select your all <i>StreamingHistory*.json</i> files</h1>
           <p>
-            Make sure to select all files you'd like to be imported at once!
+            Make sure to select only the files which names start with
+            "StreamingHistory", and <b>select all the files at once!</b>
           </p>
           <input type="file" id="files" name="files" multiple /><br />
           <br />
@@ -78,7 +81,8 @@
             <div class="authcode-wrapper">
               <h1>Success!</h1>
               <p id="streams-imported" class="half-witdh"></p>
-              <p class="half-witdh"></p>Please open your Spotistats and click "import data" on the
+              <p class="half-witdh">
+                Please open your Spotistats and click "import data" on the
                 settings page and enter this code:
               </p>
               <h1 class="import-code">0000</h1>
@@ -90,19 +94,19 @@
       <!-- <div id="prev-imported" style="display: none;">
         <h2>Previously imported</h2>
       </div> -->
-      <div class="divider"></div>
+      <div class="divider guide-hide"></div>
       <section>
-        <h1>Guide</h1>
-        <br />
+        <h1 class="guide-hide">Guide</h1>
+        <br class="guide-hide" />
         <article>
-          <h3>1. Request your data from Spotify</h3>
+          <h2>1. Request your data from Spotify</h2>
           <p>
             Navigate to
             <a href="https://www.spotify.com/account/privacy" target="blank"
-              >spotify.com/account</a
+              >spotify.com/account/privacy</a
             >
-            and scroll down to "Download your data", and click the "Request"
-            button.
+            (make sure your on the privacy tab) and scroll down to "Download
+            your data". Then, click the "Request" button.
           </p>
           <img
             src="assets/image/step-1.png"
@@ -111,7 +115,19 @@
           />
         </article>
         <article>
-          <h3>2. Wait till your data arrives in your email</h3>
+          <h2>2. Confirm your request</h2>
+          <p>
+            To continue with downloading your data you must confirm the request.
+            Head over to your mail and click the big "confirm" button.
+          </p>
+          <img
+            src="assets/image/step-2.png"
+            alt="Step 2 image"
+            class="img-step"
+          />
+        </article>
+        <article>
+          <h2>3. Wait till your data arrives in your email</h2>
           <p>As Spotify states:</p>
           <blockquote>
             We are preparing your data file. This can take up to 30 days to
@@ -120,17 +136,80 @@
             <br />
             You'll receive an email when it is ready to download.
           </blockquote>
+          <p>
+            But in 99% of the cases, you'll recveive the data within ±3 days.
+          </p>
         </article>
         <article class="article-padding">
-          <h3>3. Extract the .ZIP file</h3>
+          <h2>3. Download and extract the .ZIP file</h2>
           <p>
-            Spotify delivers your data in a .ZIP file, which includes a lot of
-            personal information which you dont want to share with others.
-            Spotistats only needs the files named like
-            <code>StreamingHistory_X.json</code>
+            Once Spotify has send you your data, your data will be in a .ZIP
+            file. This includes a lot of personal information which you
+            <b>should never share with others</b>.
+            <a
+              href=" https://www.youtube.com/watch?v=do3u3tXAbWQ"
+              target="blank"
+              >How to extract a .ZIP file</a
+            >
+          </p>
+        </article>
+        <article class="article-padding">
+          <h2>4. Go to the Spotistats import website</h2>
+          <p>
+            When you have your .JSON files ready, head over to
+            <a href=" https://spotistats.app/import" target="blank"
+              >spotistats.app/import</a
+            >
+            and login with your Spotify account. Next click the "Choose files"
+            button. Next select
+            <b>all files starting with StreamingHistory</b> (hold shift to
+            select multiple files)
+          </p>
+          <img
+            src="assets/image/step-4.png"
+            alt="Step 4 image"
+            class="img-step"
+          />
+        </article>
+        <article>
+          <h2>5. Get your import code</h2>
+          <p>
+            For extra security, you'll need to enter your 4 digit import code in
+            the app. Go to Spotistats > settings > manage imports and fill in
+            the code.
+          </p>
+          <img
+            src="assets/image/step-5.png"
+            alt="Step 5 image"
+            class="img-step"
+          />
+        </article>
+        <article>
+          <h2>6. Download imported files to your device</h2>
+          <p>
+            The last step is to download your imported files onto your device.
+            Simply click "Download all imports to device" and wait a couple
+            seconds while the app downloads them.
+          </p>
+          <img
+            src="assets/image/step-6.png"
+            alt="Step 6 image"
+            class="img-step"
+          />
+        </article>
+        <article>
+          <h2>7. Ready to go!</h2>
+          <p>
+            Congratulations! You can now view your full listening history,
+            playcount and more. Note that this will only include the data you've
+            imported yourselves. If you want to update this data, start again at
+            step 1 :‎)
           </p>
         </article>
       </section>
     </main>
+    <footer>
+      <h2><a href="https://sjoerd.dev">sjoerd.dev</a> - 2021</h2>
+    </footer>
   </body>
 </html>

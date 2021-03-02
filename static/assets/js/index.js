@@ -179,4 +179,9 @@ const importStepper = new ImportStepper();
 $(document).ready(function () {
   $(".next-step").click(() => importStepper.nextStep());
   $("#files").change(() => importStepper.updateInterface());
+
+  if (location.hash == "#guide") {
+    $("#page-title").text("Import Guide");
+    $(".guide-hide").hide();
+  }
 });
