@@ -5,7 +5,6 @@ import { prisma } from "../core/Prisma";
 const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecrect = process.env.SPOTIFY_CLIENT_SECRET;
-const encryptionSecret = process.env.ENCRYPTION_SECRET as string;
 
 /**
  * Resets the tokens for a given SpotifyWebApi oject

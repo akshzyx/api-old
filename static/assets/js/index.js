@@ -160,7 +160,7 @@ class ModalController {
     modal.find(".body").text(body);
 
     modal.find("span.close").on("click", function () {
-      $(this).parent().remove();
+      $(this).parent().parent().remove();
     });
 
     modal.on("click", function (e) {
