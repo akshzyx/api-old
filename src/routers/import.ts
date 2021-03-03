@@ -25,26 +25,33 @@ importRouter.use(express.urlencoded({ extended: true }));
 importRouter.use(`${apiPrefix}/import`, express.static("static"));
 
 importRouter.use(`${apiPrefix}/import/:userid/list`, async (req, res) => {
-  const importCode = req.headers?.authorization;
-  const userId = req.params?.userid;
+  try {
+    const auth = req.headers?.authorization;
+    const userId = req.params?.userid;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
+    const isImportCode = auth.length == 4;
+    if (!isImportCode) {
+      jwt.verify(auth, jwtSecret);
+    }
 
-  if (!user) {
-    return res.status(404).json({ success: false, message: "no user found" });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "no user found" });
+    }
+
+    if (isImportCode && user.importCode != auth) {
+      throw Error("invalid authorization");
+    }
+
+    const files = await cloudStorage.listFiles(user);
+
+    res.json({ success: true, data: { ...user, imports: files } });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
-
-  if (user.importCode != importCode) {
-    return res
-      .status(401)
-      .json({ success: false, message: "invalid authorization" });
-  }
-
-  const files = await cloudStorage.listFiles(user);
-
-  res.json({ success: true, data: { ...user, imports: files } });
 });
 
 importRouter.use(`${apiPrefix}/import/:userid/download`, async (req, res) => {
