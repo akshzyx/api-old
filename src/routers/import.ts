@@ -119,7 +119,7 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
 
     let totalStreams = 0;
 
-    const totalContent: object[] = [];
+    const totalContent: string[][] = [];
 
     files.forEach((file): void => {
       const validName = /StreamingHistory[0-9][0-9]?.json/g.test(file.name);
@@ -141,7 +141,8 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
             "trackName" in e &&
             "msPlayed" in e
           ) {
-            totalContent.push(e);
+            e["endTime"] = Date.parse(e["endTime"].replace(" ", "T")) / 10000;
+            totalContent.push(Object.values(e));
           } else throw Error(`invalid item (${file.name})`);
         });
       } else
