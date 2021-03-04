@@ -3,6 +3,7 @@ import authRouter from "../routers/auth";
 import chartsRouter from "../routers/charts";
 import importRouter from "../routers/import";
 import lyricsRouter from "../routers/lyrics";
+import redirectRouter from "../routers/redirect";
 import statusRouter from "../routers/status";
 
 export default async (): Promise<void> => {
@@ -15,6 +16,8 @@ export default async (): Promise<void> => {
   app.use(chartsRouter);
 
   app.use(lyricsRouter);
+
+  app.use(redirectRouter);
 
   app.use(statusRouter);
 
