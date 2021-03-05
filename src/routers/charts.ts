@@ -1,9 +1,11 @@
 import * as CSV from "csv-string";
 import { Request, Response, Router } from "express";
+import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
 
 const chartsRouter = Router();
 const apiPrefix = process.env.API_PREFIX;
+const jwtSecret = process.env.JWT_SECRET as string;
 
 const getCharts = async (type, country, date) => {
   const lastIndex = type == "regional" ? 4 : 3;
@@ -59,6 +61,15 @@ saveCharts();
 chartsRouter.get(
   `${apiPrefix}/charts/:type/:country/:date`,
   async (req: Request, res: Response) => {
+    const token = req.headers?.authorization;
+    try {
+      jwt.verify(token, jwtSecret);
+    } catch (e) {
+      return res
+        .status(401)
+        .json({ success: false, message: "invalid authorization" });
+    }
+
     const type: string = req.params.type;
     const country: string = req.params.country;
     const date: string = req.params.date;
