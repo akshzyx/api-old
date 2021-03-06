@@ -16,6 +16,8 @@ model User {
   importCode     String
   settings       UserSettings @relation(fields: [userSettingsId], references: [id])
   userSettingsId Int
+  apiClient      ApiClient    @relation(fields: [apiClientId], references: [id])
+  apiClientId    String
 }
 
 model UserSettings {
@@ -25,4 +27,10 @@ model UserSettings {
   accessTokenExpiration DateTime
   sharesStats           Boolean  @default(false)
   User                  User[]
+}
+
+model ApiClient {
+  id     String @id
+  secret String
+  users  User[]
 }
