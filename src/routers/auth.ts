@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
 import SpotifyWebApi from "spotify-web-api-node";
 import { URLSearchParams } from "url";
-import { prisma, User } from "../core/Prisma";
+import { ApiClient, prisma, User } from "../core/Prisma";
 import {
   getUserSpotifyApi,
   resetSpotifyApiTokens,
@@ -14,49 +14,23 @@ const authRouter = Router();
 
 authRouter.use(express.urlencoded({ extended: true }));
 
-const scopes = [
-  "ugc-image-upload",
-  "user-read-playback-state",
-  "user-read-currently-playing",
-  "user-read-email",
-  "user-read-private",
-  "playlist-read-collaborative",
-  "playlist-modify-public",
-  "playlist-read-private",
-  "playlist-modify-private",
-  "user-library-modify",
-  "user-library-read",
-  "user-top-read",
-  "user-read-playback-position",
-  "user-read-recently-played",
-  "user-follow-read",
-  "user-follow-modify",
-];
-const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
 const spotistatsRedirectUri = process.env.SPOTISTATS_AUTH_REDIRECT_URL;
-const clientId = process.env.SPOTIFY_CLIENT_ID;
-const clientSecrect = process.env.SPOTIFY_CLIENT_SECRET;
 const serverUrl = process.env.SERVER_URL;
 const apiPrefix = process.env.API_PREFIX;
 const jwtSecret = process.env.JWT_SECRET as string;
-const encryptionSecret = process.env.ENCRYPTION_SECRET as string;
 
-const getAuthorizeURL = (state: string) => {
-  const spotifyApi = new SpotifyWebApi({
-    redirectUri,
-    clientSecret: clientSecrect,
-    clientId,
+authRouter.get(`${apiPrefix}/auth/client`, async (req, res) => {
+  const client: ApiClient = await prisma.apiClient.findFirst({
+    orderBy: { count: "asc" },
   });
-  return spotifyApi.createAuthorizeURL(scopes, state, false);
-};
 
-authRouter.get(`${apiPrefix}/auth/client`, (req, res) => {
-  res.json({ success: true, data: process.env.SPOTIFY_CLIENT_ID });
+  res.json({ success: true, data: client.id });
 });
 
 authRouter.post(`${apiPrefix}/auth/token`, async (req, res) => {
   try {
     const code: string = req.body?.code as string;
+    const clientId: string = req.body?.client_id as string;
     const codeVerifier: string = req.body?.code_verifier as string;
 
     const params = new URLSearchParams();
@@ -65,12 +39,18 @@ authRouter.post(`${apiPrefix}/auth/token`, async (req, res) => {
     params.append("redirect_uri", spotistatsRedirectUri);
     params.append("code_verifier", codeVerifier);
 
+    const client = await prisma.apiClient.findUnique({
+      where: {
+        id: clientId,
+      },
+    });
+
     const data = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Authorization: `Basic ${Buffer.from(
-          clientId + ":" + clientSecrect
+          client.id + ":" + client.secret
         ).toString("base64")}`,
       },
       body: params,
@@ -78,8 +58,8 @@ authRouter.post(`${apiPrefix}/auth/token`, async (req, res) => {
 
     const spotifyApi = new SpotifyWebApi({
       redirectUri: spotistatsRedirectUri,
-      clientSecret: clientSecrect,
-      clientId,
+      clientSecret: client.secret,
+      clientId: client.id,
     });
 
     saveUser(spotifyApi, data, res, false);
@@ -138,37 +118,6 @@ authRouter.post(`${apiPrefix}/auth/token/refresh`, async (req, res) => {
   }
 });
 
-authRouter.get(`${apiPrefix}/auth/redirect`, (req, res) => {
-  const state = req.query?.state?.toString() ?? "state";
-  const authorizeURL = getAuthorizeURL(state);
-  res.redirect(301, authorizeURL);
-});
-
-authRouter.get(`${apiPrefix}/auth/redirect/url`, (req, res) => {
-  const state = req.query?.state?.toString() ?? "state";
-  const authorizeURL = getAuthorizeURL(state);
-  return res.status(200).json({ success: true, data: authorizeURL });
-});
-
-authRouter.get(
-  `${apiPrefix}/auth/callback`,
-  async (req: Request, res: Response) => {
-    try {
-      const code: string = req.query.code as string;
-      const spotifyApi = new SpotifyWebApi({
-        redirectUri,
-        clientSecret: clientSecrect,
-        clientId,
-      });
-
-      const data = await spotifyApi.authorizationCodeGrant(code);
-      saveUser(spotifyApi, data.body, res, true);
-    } catch (e) {
-      return res.status(500).json({ success: false, message: e });
-    }
-  }
-);
-
 const saveUser = async (
   spotifyApi: SpotifyWebApi,
   body,
@@ -214,9 +163,25 @@ const saveUser = async (
             accessTokenExpiration: expiryDate,
           },
         },
+        apiClient: {
+          connect: {
+            id: spotifyApi.getClientId(),
+          },
+        },
       },
       include: {
         settings: true,
+      },
+    });
+
+    await prisma.apiClient.update({
+      where: {
+        id: spotifyApi.getClientId(),
+      },
+      data: {
+        count: {
+          increment: 1,
+        },
       },
     });
 

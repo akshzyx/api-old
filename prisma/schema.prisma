@@ -32,5 +32,6 @@ model UserSettings {
 model ApiClient {
   id     String @id
   secret String
+  count  Int    @default(0)
   users  User[]
 }
