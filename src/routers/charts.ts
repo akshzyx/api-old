@@ -1,5 +1,6 @@
 import * as CSV from "csv-string";
 import { Request, Response, Router } from "express";
+import redis from "../core/Redis";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
 
@@ -28,31 +29,23 @@ const getCharts = async (type, country, date) => {
 };
 
 const saveCharts = async () => {
-  charts.regional.global.daily = await getCharts("regional", "global", "daily");
-  charts.regional.global.weekly = await getCharts(
-    "regional",
-    "global",
-    "weekly"
+  redis.set(
+    "charts.regional.global.daily",
+    JSON.stringify(await getCharts("regional", "global", "daily"))
   );
-  charts.viral.global.daily = await getCharts("viral", "global", "daily");
-  charts.viral.global.weekly = await getCharts("viral", "global", "weekly");
-  charts.snapshot = new Date().toISOString();
-};
-
-let charts = {
-  snapshot: "",
-  viral: {
-    global: {
-      daily: {},
-      weekly: {},
-    },
-  },
-  regional: {
-    global: {
-      daily: {},
-      weekly: {},
-    },
-  },
+  redis.set(
+    "charts.regional.global.weekly",
+    JSON.stringify(await getCharts("regional", "global", "weekly"))
+  );
+  redis.set(
+    "charts.viral.global.daily",
+    JSON.stringify(await getCharts("viral", "global", "daily"))
+  );
+  redis.set(
+    "charts.viral.global.weekly",
+    JSON.stringify(await getCharts("viral", "global", "weekly"))
+  );
+  redis.set("charts.snapshot", new Date().toISOString());
 };
 
 setInterval(saveCharts, 5 * 60 * 1000); // every 5 minutes
@@ -61,37 +54,30 @@ saveCharts();
 chartsRouter.get(
   `${apiPrefix}/charts/:type/:country/:date`,
   async (req: Request, res: Response) => {
-    const token = req.headers?.authorization;
     try {
+      const token = req.headers?.authorization;
       jwt.verify(token, jwtSecret);
+
+      const type: string = req.params.type;
+      const country: string = req.params.country;
+      const date: string = req.params.date;
+
+      if (type === null || country === null || date === null) {
+        throw Error("no type, country or date provided");
+      }
+
+      const data = {
+        snapshot: await redis.get("charts.snapshot"),
+        data: JSON.parse(await redis.get(`charts.${type}.${country}.${date}`)), // TODO: is this safe?
+      };
+
+      return res.json({
+        success: true,
+        data: data,
+      });
     } catch (e) {
-      return res
-        .status(401)
-        .json({ success: false, message: "invalid authorization" });
+      return res.status(500).json({ success: false, message: e.message });
     }
-
-    const type: string = req.params.type;
-    const country: string = req.params.country;
-    const date: string = req.params.date;
-
-    const data = {};
-    let statusCode = 200;
-
-    if (country === null || date === null) {
-      statusCode = 400;
-      data["error"] = "no locale and date provided";
-    }
-
-    try {
-      data["snapshot"] = charts.snapshot;
-      data["length"] = charts[type][country][date].length;
-      data["data"] = charts[type][country][date];
-    } catch (e) {
-      statusCode = 500;
-      data["error"] = e.toString();
-    }
-
-    return res.status(statusCode).json(data).end();
   }
 );
 
