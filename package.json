@@ -31,6 +31,7 @@
     "prom-client": "^13.1.0",
     "redis": "^3.0.2",
     "reflect-metadata": "^0.1.13",
+    "short-unique-id": "^3.2.3",
     "spotify-web-api-node": "^5.0.2",
     "windows-1252": "^1.0.0"
   },
