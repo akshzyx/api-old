@@ -4,12 +4,14 @@ import fs from "fs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../core/Prisma";
 import CloudStorageService from "../services/cloudStorage";
+import ImportCodeService from "../services/importCode";
 import windows1252 from "windows-1252";
 
 const importRouter = Router();
 const jwtSecret = process.env.JWT_SECRET as string;
 const apiPrefix = process.env.API_PREFIX;
 const cloudStorage = new CloudStorageService();
+const importCode = new ImportCodeService();
 
 importRouter.use(
   fileUpload({
@@ -24,15 +26,13 @@ importRouter.use(express.urlencoded({ extended: true }));
 
 importRouter.use(`${apiPrefix}/import`, express.static("static"));
 
-importRouter.get(`${apiPrefix}/import/:userid/list`, async (req, res) => {
+importRouter.get(`${apiPrefix}/import/code`, async (req, res) => {
   try {
     const auth = req.headers?.authorization;
-    const userId = req.params?.userid;
 
-    const isImportCode = auth.length == 4;
-    if (!isImportCode) {
-      jwt.verify(auth, jwtSecret);
-    }
+    const decodedToken = jwt.verify(auth, jwtSecret);
+    // @ts-ignore
+    const userId = decodedToken.userId;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -42,8 +42,47 @@ importRouter.get(`${apiPrefix}/import/:userid/list`, async (req, res) => {
       return res.status(404).json({ success: false, message: "no user found" });
     }
 
-    if (isImportCode && user.importCode != auth) {
-      throw Error("invalid authorization");
+    const code = await importCode.set(user);
+
+    res.json({ success: true, data: code });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+importRouter.post(`${apiPrefix}/import/code`, async (req, res) => {
+  try {
+    const code = req.body?.code;
+    if (!code) {
+      return res.status(400).json({ success: false, message: "no code given" });
+    }
+
+    const user = await importCode.get(code);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "no user found" });
+    }
+
+    res.json({ success: true, data: user });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+importRouter.get(`${apiPrefix}/import/list`, async (req, res) => {
+  try {
+    const token = req.headers?.authorization;
+
+    const decodedToken = jwt.verify(token, jwtSecret);
+    // @ts-ignore
+    const userId = decodedToken.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "no user found" });
     }
 
     const files = await cloudStorage.listFiles(user);
@@ -54,55 +93,31 @@ importRouter.get(`${apiPrefix}/import/:userid/list`, async (req, res) => {
   }
 });
 
-importRouter.get(`${apiPrefix}/import/:userid/download`, async (req, res) => {
-  const importCode = req.headers?.authorization;
-  const userId = req.params?.userid;
-  const fileName = req.query?.fileName;
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user) {
-    return res.status(404).json({ success: false, message: "no user found" });
-  }
-
-  if (user.importCode != importCode) {
-    return res
-      .status(401)
-      .json({ success: false, message: "invalid authorization" });
-  }
-
-  const url = await cloudStorage.getDownloadURL(`import/${userId}/${fileName}`);
-
-  res.json({ success: true, data: url });
-});
-
-importRouter.get(`${apiPrefix}/import/userinfo`, async (req, res) => {
-  const token = req.headers?.authorization;
-  if (!token) {
-    return res
-      .status(401)
-      .json({ success: false, message: "invalid authorization" });
-  }
-  let userId;
+importRouter.get(`${apiPrefix}/import/download`, async (req, res) => {
   try {
+    const token = req.headers?.authorization;
+    const fileName = req.query?.fileName;
+
     const decodedToken = jwt.verify(token, jwtSecret);
     // @ts-ignore
-    userId = decodedToken.userId;
+    const userId = decodedToken.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "no user found" });
+    }
+
+    const url = await cloudStorage.getDownloadURL(
+      `import/${userId}/${fileName}`
+    );
+
+    res.json({ success: true, data: url });
   } catch (e) {
-    return res.status(404).json({ success: false, message: e.message });
+    res.status(500).json({ success: false, message: e.message });
   }
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user) {
-    return res.status(404).json({ success: false, message: "no user found" });
-  }
-
-  res.json({ success: true, data: user });
 });
 
 importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
@@ -112,9 +127,9 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
       throw Error("missing file(s)");
     }
 
-    const token = req.body.token;
-    if (token == undefined) {
-      throw Error("missing token");
+    const code = req.body?.code;
+    if (code == undefined) {
+      throw Error("missing code");
     }
 
     let files = Object.keys(req.files).map<UploadedFile>(
@@ -158,20 +173,8 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
 
     // TODO: filter dupes from totalContent
 
-    let userId;
-    try {
-      const decodedToken = jwt.verify(token, jwtSecret);
-      // @ts-ignore
-      userId = decodedToken.userId;
-    } catch (e) {
-      throw Error("invalid auth");
-    }
-
-    let user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (user === null) throw Error("user not found");
+    let user = await importCode.get(code);
+    if (!user) throw Error("invalid code");
 
     const fileName = `import-${user.id}-${new Date()
       .toJSON()
@@ -183,10 +186,11 @@ importRouter.post(`${apiPrefix}/import/upload`, async (req, res) => {
 
     const importedFiles = await cloudStorage.listFiles(user);
 
+    importCode.remove(code);
+
     res.json({
       success: true,
       message: `Succesfully imported ${totalStreams} streams!`,
-      importCode: user.importCode,
       user: { ...user, imports: importedFiles },
     });
   } catch (e) {
