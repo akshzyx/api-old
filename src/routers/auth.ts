@@ -155,7 +155,6 @@ const saveUser = async (
         id: userId,
         displayName: displayName,
         disabled: false,
-        importCode: Math.floor(1000 + Math.random() * 9000).toString(),
         settings: {
           create: {
             refreshToken: body.refresh_token,
