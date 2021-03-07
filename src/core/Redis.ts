@@ -8,6 +8,10 @@ class _RedisService {
     this._client.on("error", this._error);
   }
 
+  get client() {
+    return this._client;
+  }
+
   _error(e): void {
     console.error(e);
   }
