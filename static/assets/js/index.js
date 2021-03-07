@@ -23,9 +23,9 @@ class ImportStepper {
         this._code = code;
         localStorage.setItem("code", this._code);
         this.user = res.data;
-        $("#import-code input[type='text'")
+        $("#import-code input[type='text']")
           .val(this._code)
-          .prop("readonly", true);
+          .prop("disabled", true);
       } else {
         delete this._code;
         delete this.user;
