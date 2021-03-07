@@ -9,7 +9,7 @@ class ImportCodeService {
   async set(user: User): Promise<string> {
     const code = this._uid();
     if ((await redis.get(code)) != null) return await this.set(user);
-    await redis.set(code, user.id);
+    await redis.set(code, user.id, 10 * 60);
     return code;
   }
 
