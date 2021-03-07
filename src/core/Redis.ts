@@ -12,17 +12,27 @@ class _RedisService {
     console.error(e);
   }
 
-  async set(key, value, ttl = 5 * 60) {
+  async set(key, value, ttl = 5 * 60): Promise<string> {
     return new Promise((resolve, reject) =>
       this._client.set(key, value, "EX", ttl, (e, reply) =>
-        e ? reject(e) : resolve(reply)
+        e ? reject(e) : resolve(reply?.toString())
       )
     );
   }
 
-  async get(key) {
+  async get(key): Promise<string> {
     return new Promise((resolve, reject) =>
-      this._client.get(key, (e, reply) => (e ? reject(e) : resolve(reply)))
+      this._client.get(key, (e, reply) =>
+        e ? reject(e) : resolve(reply?.toString())
+      )
+    );
+  }
+
+  async del(key) {
+    return new Promise((resolve, reject) =>
+      this._client.del(key, (e, reply) =>
+        e ? reject(e) : resolve(reply?.toString())
+      )
     );
   }
 }
