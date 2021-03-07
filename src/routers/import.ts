@@ -24,7 +24,7 @@ importRouter.use(express.urlencoded({ extended: true }));
 
 importRouter.use(`${apiPrefix}/import`, express.static("static"));
 
-importRouter.use(`${apiPrefix}/import/:userid/list`, async (req, res) => {
+importRouter.get(`${apiPrefix}/import/:userid/list`, async (req, res) => {
   try {
     const auth = req.headers?.authorization;
     const userId = req.params?.userid;
@@ -54,7 +54,7 @@ importRouter.use(`${apiPrefix}/import/:userid/list`, async (req, res) => {
   }
 });
 
-importRouter.use(`${apiPrefix}/import/:userid/download`, async (req, res) => {
+importRouter.get(`${apiPrefix}/import/:userid/download`, async (req, res) => {
   const importCode = req.headers?.authorization;
   const userId = req.params?.userid;
   const fileName = req.query?.fileName;
@@ -78,7 +78,7 @@ importRouter.use(`${apiPrefix}/import/:userid/download`, async (req, res) => {
   res.json({ success: true, data: url });
 });
 
-importRouter.use(`${apiPrefix}/import/userinfo`, async (req, res) => {
+importRouter.get(`${apiPrefix}/import/userinfo`, async (req, res) => {
   const token = req.headers?.authorization;
   if (!token) {
     return res
