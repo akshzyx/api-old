@@ -25,7 +25,7 @@ export async function getUserSpotifyApi(
 ): Promise<SpotifyWebApi> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { settings: true },
+    include: { settings: true, apiClient: true },
   });
 
   if (!user) {
@@ -34,8 +34,8 @@ export async function getUserSpotifyApi(
 
   const spotifyApi = new SpotifyWebApi({
     redirectUri,
-    clientSecret: clientSecrect,
-    clientId,
+    clientSecret: user.apiClient.secret,
+    clientId: user.apiClient.id,
   });
 
   return new Promise((resolve, reject) => {
