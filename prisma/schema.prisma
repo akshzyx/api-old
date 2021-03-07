@@ -17,6 +17,7 @@ model User {
   userSettingsId Int
   apiClient      ApiClient    @relation(fields: [apiClientId], references: [id])
   apiClientId    String
+  isPlus         Boolean      @default(false)
 }
 
 model UserSettings {
