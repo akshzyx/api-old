@@ -150,6 +150,11 @@ const saveUser = async (
             accessTokenExpiration: expiryDate,
           },
         },
+        apiClient: {
+          connect: {
+            id: spotifyApi.getClientId(),
+          },
+        },
       },
       create: {
         id: userId,
