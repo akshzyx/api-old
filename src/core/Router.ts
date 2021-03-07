@@ -5,9 +5,27 @@ import importRouter from "../routers/import";
 import lyricsRouter from "../routers/lyrics";
 import redirectRouter from "../routers/redirect";
 import statusRouter from "../routers/status";
+import RateLimit from "express-rate-limit";
+import RedisStore from "rate-limit-redis";
+import Redis from "./Redis";
 
 export default async (): Promise<void> => {
   const app = express();
+
+  app.use(
+    RateLimit({
+      store: new RedisStore({
+        client: Redis.client,
+      }),
+      max: 50,
+      windowMs: 5 * 60 * 1000,
+      // @ts-ignore
+      message: {
+        success: false,
+        message: "too many requests",
+      },
+    })
+  );
 
   app.use(authRouter);
 
