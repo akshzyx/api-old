@@ -1,12 +1,13 @@
 import express from "express";
+import RateLimit from "express-rate-limit";
+import RedisStore from "rate-limit-redis";
 import authRouter from "../routers/auth";
 import chartsRouter from "../routers/charts";
 import importRouter from "../routers/import";
 import lyricsRouter from "../routers/lyrics";
+import plusRouter from "../routers/plus";
 import redirectRouter from "../routers/redirect";
 import statusRouter from "../routers/status";
-import RateLimit from "express-rate-limit";
-import RedisStore from "rate-limit-redis";
 import Redis from "./Redis";
 
 export default async (): Promise<void> => {
@@ -28,6 +29,8 @@ export default async (): Promise<void> => {
   );
 
   app.use(authRouter);
+
+  app.use(plusRouter);
 
   app.use(importRouter);
 
