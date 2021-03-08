@@ -81,7 +81,7 @@ class ImportStepper {
   async step2() {
     return new Promise(async (resolve, _) => {
       var form_data = new FormData();
-      form_data.append("code", this._code);
+      form_data.append("code", this._code.toUpperCase());
 
       var totalfiles = document.getElementById("files").files.length;
       for (var index = 0; index < totalfiles; index++) {
