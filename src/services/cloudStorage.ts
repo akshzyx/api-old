@@ -9,7 +9,7 @@ class CloudStorageService {
     const storage = new Storage({
       keyFilename: path.join(
         __dirname,
-        "../../spotistats-a49da-a4f206dcbf07.json"
+        "../../spotistats-a49da-be9ea38b0d73.json"
       ),
       projectId: "spotistats-a49da",
     });
