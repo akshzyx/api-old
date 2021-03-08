@@ -10,14 +10,15 @@ generator client {
 }
 
 model User {
-  id             String       @id
+  id             String          @id
   displayName    String
   disabled       Boolean
-  settings       UserSettings @relation(fields: [userSettingsId], references: [id])
+  settings       UserSettings    @relation(fields: [userSettingsId], references: [id])
   userSettingsId Int
-  apiClient      ApiClient    @relation(fields: [apiClientId], references: [id])
+  apiClient      ApiClient       @relation(fields: [apiClientId], references: [id])
   apiClientId    String
-  isPlus         Boolean      @default(false)
+  isPlus         Boolean         @default(false)
+  inAppPurchase  InAppPurchase[]
 }
 
 model UserSettings {
@@ -34,4 +35,13 @@ model ApiClient {
   secret String
   count  Int    @default(0)
   users  User[]
+}
+
+model InAppPurchase {
+  id            String   @id
+  purchaseDate  DateTime
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  productId     String
+  googleOrderId String?
 }
