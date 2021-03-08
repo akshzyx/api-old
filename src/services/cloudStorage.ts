@@ -9,7 +9,7 @@ class CloudStorageService {
     const storage = new Storage({
       keyFilename: path.join(
         __dirname,
-        "../../spotistats-a49da-be9ea38b0d73.json"
+        process.env.GOOGLE_SERVICE_ACCOUNT_PATH
       ),
       projectId: "spotistats-a49da",
     });
