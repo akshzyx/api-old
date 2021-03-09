@@ -17,8 +17,10 @@ class _RedisService {
   }
 
   async set(key, value, ttl = 5 * 60): Promise<string> {
+    const expire = ttl < 0 ? [] : ["EX", ttl];
     return new Promise((resolve, reject) =>
-      this._client.set(key, value, "EX", ttl, (e, reply) =>
+      // @ts-ignore
+      this._client.set(key, value, ...expire, (e, reply) =>
         e ? reject(e) : resolve(reply?.toString())
       )
     );
