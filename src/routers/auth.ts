@@ -45,6 +45,8 @@ authRouter.post(`${apiPrefix}/auth/token`, async (req, res) => {
       },
     });
 
+    client.secret = decrypt(client.secret);
+
     const data = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
       headers: {

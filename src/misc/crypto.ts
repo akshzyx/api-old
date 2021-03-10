@@ -1,15 +1,12 @@
-import CryptoJS from "crypto-js";
+import aes256 from "aes256";
 
-const encryptionSecret = process.env.ENCRYPTION_SECRET as string;
+const encryptionKey = process.env.ENCRYPTION_KEY;
+const cipher = aes256.createCipher(encryptionKey);
 
 export function encrypt(msg: string): string {
-  return msg;
-  // return CryptoJS.AES.encrypt(msg, encryptionSecret).toString();
+  return cipher.encrypt(msg);
 }
 
 export function decrypt(msg: string): string {
-  return msg;
-  // return CryptoJS.AES.decrypt(msg, encryptionSecret).toString(
-  //   CryptoJS.enc.Utf8
-  // );
+  return cipher.decrypt(msg);
 }

@@ -1,5 +1,5 @@
 import SpotifyWebApi from "spotify-web-api-node";
-import { decrypt } from "../misc/crypto";
+import { decrypt, encrypt } from "../misc/crypto";
 import { prisma } from "../core/Prisma";
 
 const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
@@ -32,6 +32,7 @@ export async function getUserSpotifyApi(
     throw "user does not exist";
   }
 
+  user.apiClient.secret = decrypt(user.apiClient.secret);
   const spotifyApi = new SpotifyWebApi({
     redirectUri,
     clientSecret: user.apiClient.secret,
@@ -54,11 +55,11 @@ export async function getUserSpotifyApi(
           );
 
           // @ts-ignore
-          refreshResult.body.refresh_token = decrypt(
+          refreshResult.body.refresh_token = encrypt(
             // @ts-ignore
             refreshResult.body.refresh_token
           );
-          refreshResult.body.access_token = decrypt(
+          refreshResult.body.access_token = encrypt(
             refreshResult.body.access_token
           );
 
