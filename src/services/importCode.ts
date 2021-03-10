@@ -7,15 +7,16 @@ class ImportCodeService {
   private _uid = new ShortUniqueId({ length: 6, dictionary: this._dictionary });
 
   async set(user: User): Promise<string> {
-    const code = this._uid().toUpperCase();
-    if ((await redis.get(code)) != null) return await this.set(user);
-    await redis.set(code, user.id, 10 * 60);
+    const code = this._uid();
+    if ((await redis.get(this._formatCode(code))) != null) {
+      return await this.set(user);
+    }
+    await redis.set(this._formatCode(code), user.id, 10 * 60);
     return code;
   }
 
   async get(code: string): Promise<User> {
-    code = code.toUpperCase();
-    const userId: string = await redis.get(code);
+    const userId: string = await redis.get(this._formatCode(code));
     if (!userId) return null;
     return await prisma.user.findUnique({
       where: {
@@ -25,8 +26,11 @@ class ImportCodeService {
   }
 
   async remove(code: string) {
-    code = code.toUpperCase();
-    return await redis.del(code);
+    return await redis.del(this._formatCode(code));
+  }
+
+  private _formatCode(code: string) {
+    return `import.${code.toUpperCase()}`;
   }
 }
 
