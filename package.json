@@ -2,7 +2,8 @@
   "name": "spotistats-api",
   "version": "1.0.0",
   "description": "The official API for the Spotistats app (Android + iOS) 💚",
-  "main": "src/index.js",
+  "main": "dist/main.js",
+  "private": true,
   "scripts": {
     "eslint": "eslint",
     "compile": "tsc -p .",
@@ -11,7 +12,8 @@
     "start:prod": "docker-compose -p spotistats -f docker/prod.yml up -d",
     "start:redis": "docker-compose -p spotistats -f docker/redis.yml up -d",
     "start:db": "docker-compose -p spotistats -f docker/db.yml up -d",
-    "migrate": "prisma migrate dev --preview-feature",
+    "prisma:migrate": "prisma migrate dev --preview-feature --schema src/modules/prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema src/modules/prisma/schema.prisma"
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
