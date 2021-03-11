@@ -13,7 +13,7 @@
     "start:redis": "docker-compose -p spotistats -f docker/redis.yml up -d",
     "start:db": "docker-compose -p spotistats -f docker/db.yml up -d",
     "prisma:migrate": "prisma migrate dev --preview-feature --schema src/modules/prisma/schema.prisma",
-    "prisma:generate": "prisma generate --schema src/modules/prisma/schema.prisma"
+    "prisma:generate": "prisma generate --schema src/modules/prisma/schema.prisma",
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
