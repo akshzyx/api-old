@@ -34,15 +34,19 @@ class InAppPurchaseService {
 
     const data: iap.PurchasedItem = purchaseData[0];
 
-    const date = new Date(
+    let date = Date.now();
+    // @ts-ignore
+    if (typeof data?.purchaseTimeMillis == "number")
       // @ts-ignore
-      data.orderId ? data.purchaseTimeMillis : data.purchaseDateMs
-    );
+      date = data.purchaseTimeMillis;
+    // @ts-ignore
+    if (typeof data?.purchaseDateMs == "number") date = data.purchaseDateMs;
+
     try {
       await prisma.inAppPurchase.create({
         data: {
           id: data.transactionId,
-          purchaseDate: date,
+          purchaseDate: new Date(date),
           googleOrderId: data?.orderId,
           productId: data.productId,
           userId: user.id,
