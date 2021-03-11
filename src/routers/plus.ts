@@ -33,7 +33,7 @@ plusRouter.post(`${apiPrefix}/plus`, async (req, res) => {
     }
 
     const inAppPurchase = await iap.validate(receipt, user);
-    if (inAppPurchase) {
+    if (inAppPurchase || (user.inAppPurchase?.length > 0 && !user.isPlus)) {
       user = await prisma.user.update({
         where: { id: userId },
         data: { isPlus: true },
