@@ -22,8 +22,11 @@ export class UserAuthGuard implements CanActivate {
     let userId;
 
     try {
-      const decodedToken = jwt.verify(token, jwtSecret);
-      // @ts-ignore
+      const decodedToken = jwt.verify(token, jwtSecret) as Record<
+        string,
+        unknown
+      >;
+
       userId = decodedToken.userId;
     } catch (e) {
       return false;
