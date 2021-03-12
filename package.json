@@ -27,17 +27,23 @@
   },
   "author": "Sjoerd Bolten",
   "license": "",
+  "prisma": {
+    "schema": "src/modules/prisma/schema.prisma"
+  },
   "dependencies": {
     "@google-cloud/storage": "^5.8.0",
     "@nestjs/common": "^7.6.13",
     "@nestjs/core": "^7.6.13",
     "@nestjs/platform-express": "^7.6.13",
     "@prisma/client": "^2.18.0",
+    "@types/cache-manager": "^3.4.0",
     "@types/express-rate-limit": "^5.1.1",
     "@types/in-app-purchase": "^1.11.0",
     "@types/rate-limit-redis": "^1.7.1",
     "@types/redis": "^2.8.28",
     "aes256": "^1.1.0",
+    "cache-manager": "^3.4.1",
+    "cache-manager-redis-store": "^2.0.0",
     "csv-string": "^4.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
