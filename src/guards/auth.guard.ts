@@ -59,3 +59,10 @@ export class AuthGuard implements CanActivate {
     return true;
   }
 }
+
+@Injectable()
+export class NoAuthGuard implements CanActivate {
+  async canActivate(): Promise<boolean> {
+    return true;
+  }
+}

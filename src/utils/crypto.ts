@@ -1,6 +1,7 @@
 import { createCipher } from 'aes256';
 
 const encryptionKey = process.env.ENCRYPTION_KEY;
+console.log(process.env);
 const cipher = createCipher(encryptionKey);
 
 export function encrypt(msg: string): string {

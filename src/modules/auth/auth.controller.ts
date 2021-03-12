@@ -4,7 +4,6 @@ import { Response } from '../../interfaces/response';
 import { AuthService } from './auth.service';
 
 @Controller('/auth')
-@UseGuards(AuthGuard)
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -16,11 +15,12 @@ export class AuthController {
     };
   }
 
+  // @UseGuards(AuthGuard)
   @Post('/token')
-  async refreshToken(@Req() req): Promise<Response> {
+  async tokenExchange(@Req() req): Promise<Response> {
     return {
       success: true,
-      data: await this.authService.refreshToken(req.body),
+      data: await this.authService.tokenExchange(req.body),
     };
   }
 }

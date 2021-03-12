@@ -4,8 +4,9 @@ import { sign } from 'jsonwebtoken';
 import fetch from 'node-fetch';
 import SpotifyWebApi from 'spotify-web-api-node';
 import { decrypt, encrypt } from '../../utils/crypto';
-import { resetSpotifyApiTokens } from '../../utils/spotify';
+import { getUserSpotifyApi, resetSpotifyApiTokens } from '../../utils/spotify';
 import { PrismaService } from '../prisma/prisma.service';
+console.log(SpotifyWebApi);
 
 const spotistatsRedirectUri = process.env.SPOTISTATS_AUTH_REDIRECT_URL;
 const serverUrl = process.env.SERVER_URL;
@@ -23,8 +24,30 @@ export class AuthService {
 
     return client.id;
   }
+
+  async getToken(user: User) {
+    await getUserSpotifyApi(user.id, this.prisma);
+
+    user = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: { settings: true },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    // @ts-ignore
+    delete user.settings.refreshToken;
+
+    // @ts-ignore
+    user.settings.accessToken = decrypt(user.settings.accessToken);
+
+    return user;
+  }
+
   // user: User
-  async refreshToken(body) {
+  async tokenExchange(body) {
     const code: string = body?.code as string;
     const clientId: string = body?.client_id as string;
     const codeVerifier: string = body?.code_verifier as string;
@@ -75,7 +98,7 @@ export class AuthService {
     );
     body.access_token = encrypt(body.access_token);
 
-    let user = await this.prisma.user.upsert({
+    const user = await this.prisma.user.upsert({
       where: { id: userId },
       update: {
         settings: {
