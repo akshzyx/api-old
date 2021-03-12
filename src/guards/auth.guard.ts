@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../modules/prisma/prisma.service';
 import { verify } from 'jsonwebtoken';
+import { Reflector } from '@nestjs/core';
+import { Prisma } from '.prisma/client';
 
 const jwtSecret = process.env.JWT_SECRET as string;
 
@@ -13,7 +15,7 @@ const jwtSecret = process.env.JWT_SECRET as string;
 export class UserAuthGuard implements CanActivate {
   private readonly logger = new Logger('Auth');
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -29,7 +31,15 @@ export class UserAuthGuard implements CanActivate {
       return false;
     }
 
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const include = this.reflector.get<Prisma.UserInclude>(
+      'includes',
+      context.getClass(),
+    )[0];
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include,
+    });
 
     if (!user) return false;
 
