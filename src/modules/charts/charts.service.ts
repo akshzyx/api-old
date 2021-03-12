@@ -42,22 +42,31 @@ export class ChartsService {
   }
 
   async saveCharts() {
+    const options = { ttl: 10 * 60 };
     await this.redisService.set(
       'charts.regional.global.daily',
       JSON.stringify(await this._getCharts('regional', 'global', 'daily')),
+      options,
     );
     await this.redisService.set(
       'charts.regional.global.weekly',
       JSON.stringify(await this._getCharts('regional', 'global', 'weekly')),
+      options,
     );
     await this.redisService.set(
       'charts.viral.global.daily',
       JSON.stringify(await this._getCharts('viral', 'global', 'daily')),
+      options,
     );
     await this.redisService.set(
       'charts.viral.global.weekly',
       JSON.stringify(await this._getCharts('viral', 'global', 'weekly')),
+      options,
     );
-    await this.redisService.set('charts.snapshot', new Date().toISOString());
+    await this.redisService.set(
+      'charts.snapshot',
+      new Date().toISOString(),
+      options,
+    );
   }
 }
