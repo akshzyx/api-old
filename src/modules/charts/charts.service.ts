@@ -1,13 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as CSV from 'csv-string';
 import { RedisService } from '../redis/redis.service';
 import fetch from 'node-fetch';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ChartsService {
-  constructor(private redisService: RedisService) {
-    setInterval(this.saveCharts, 5 * 60 * 1000); // every 5 minutes
-    this.saveCharts();
+  private readonly logger = new Logger('Charts');
+
+  constructor(private redisService: RedisService) {}
+
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async handleCron() {
+    this.logger.log('Running saveCharts...');
+    await this.saveCharts();
   }
 
   async getCharts(type, country, date) {
