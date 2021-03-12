@@ -1,4 +1,4 @@
-import { All, Controller, Get } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -14,7 +14,7 @@ export class AppController {
   }
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  root(): string {
+    return 'Spotistats API\n\nhttps://spotistats.app/\nhttps://github.com/Netlob/spotistats-api';
   }
 }
