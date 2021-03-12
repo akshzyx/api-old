@@ -13,9 +13,9 @@ import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
   imports: [
-    // CacheModule.register({
-    //   store: redisStore,
-    // }),
+    CacheModule.register({
+      store: redisStore,
+    }),
     PrismaModule,
     AuthModule,
     LyricsModule,
