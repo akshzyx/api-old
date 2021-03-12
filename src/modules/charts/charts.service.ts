@@ -1,20 +1,20 @@
-import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as CSV from 'csv-string';
+import { RedisService } from '../redis/redis.service';
 import fetch from 'node-fetch';
-import { Cache } from 'cache-manager';
 
 @Injectable()
 export class ChartsService {
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
+  constructor(private redisService: RedisService) {
     setInterval(this.saveCharts, 5 * 60 * 1000); // every 5 minutes
     this.saveCharts();
   }
 
   async getCharts(type, country, date) {
     const data = {
-      snapshot: await this.cacheManager.get('charts.snapshot'),
+      snapshot: await this.redisService.get('charts.snapshot'),
       data: JSON.parse(
-        await this.cacheManager.get(`charts.${type}.${country}.${date}`),
+        await this.redisService.get(`charts.${type}.${country}.${date}`),
       ), // TODO: is this safe?
     };
 
@@ -42,22 +42,22 @@ export class ChartsService {
   }
 
   async saveCharts() {
-    await this.cacheManager.set(
+    await this.redisService.set(
       'charts.regional.global.daily',
       JSON.stringify(await this._getCharts('regional', 'global', 'daily')),
     );
-    await this.cacheManager.set(
+    await this.redisService.set(
       'charts.regional.global.weekly',
       JSON.stringify(await this._getCharts('regional', 'global', 'weekly')),
     );
-    await this.cacheManager.set(
+    await this.redisService.set(
       'charts.viral.global.daily',
       JSON.stringify(await this._getCharts('viral', 'global', 'daily')),
     );
-    await this.cacheManager.set(
+    await this.redisService.set(
       'charts.viral.global.weekly',
       JSON.stringify(await this._getCharts('viral', 'global', 'weekly')),
     );
-    await this.cacheManager.set('charts.snapshot', new Date().toISOString());
+    await this.redisService.set('charts.snapshot', new Date().toISOString());
   }
 }
