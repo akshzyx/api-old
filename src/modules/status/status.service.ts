@@ -27,7 +27,9 @@ export class StatusService {
 
     delete body.token;
 
-    await this.redisService.set('status', JSON.stringify(body), { ttl: null });
+    await this.redisService.set('status', JSON.stringify(body), {
+      ttl: 24 * 60 * 60,
+    });
 
     return body;
   }

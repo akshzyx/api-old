@@ -20,7 +20,7 @@ export class AuthController {
   async refreshToken(@Req() req): Promise<Response> {
     return {
       success: true,
-      data: await this.authService.refreshToken(req.body.json()),
+      data: await this.authService.refreshToken(req.body),
     };
   }
 }
