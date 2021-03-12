@@ -15,7 +15,7 @@ export class AuthController {
     };
   }
 
-  // @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
   @Post('/token')
   async tokenExchange(@Req() req): Promise<Response> {
     return {
