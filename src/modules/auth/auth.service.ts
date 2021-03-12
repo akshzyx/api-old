@@ -6,7 +6,6 @@ import SpotifyWebApi from 'spotify-web-api-node';
 import { decrypt, encrypt } from '../../utils/crypto';
 import { getUserSpotifyApi, resetSpotifyApiTokens } from '../../utils/spotify';
 import { PrismaService } from '../prisma/prisma.service';
-console.log(SpotifyWebApi);
 
 const spotistatsRedirectUri = process.env.SPOTISTATS_AUTH_REDIRECT_URL;
 const serverUrl = process.env.SERVER_URL;

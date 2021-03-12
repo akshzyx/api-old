@@ -19,7 +19,6 @@ export class StatusService {
 
   async postStatus(body) {
     const token = body?.token;
-    console.log(body);
 
     if (token != statusToken) {
       return { success: false, message: 'nice try' };
