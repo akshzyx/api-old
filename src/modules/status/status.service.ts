@@ -1,24 +1,25 @@
-import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
-import { Cache } from 'cache-manager';
+import { Injectable } from '@nestjs/common';
+import { RedisService } from '../redis/redis.service';
 
 const statusToken = process.env.STATUS_TOKEN;
 
 @Injectable()
 export class StatusService {
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  constructor(private redisService: RedisService) {}
 
   async getStatus() {
     try {
-      const data = JSON.parse(await this.cacheManager.get('status'));
+      const data = JSON.parse(await this.redisService.get('status'));
       if (data?.enabled != true) throw Error();
-      return { success: true, data: data };
+      return data;
     } catch (e) {
-      return { success: true, data: null };
+      return null;
     }
   }
 
   async postStatus(body) {
     const token = body?.token;
+    console.log(body);
 
     if (token != statusToken) {
       return { success: false, message: 'nice try' };
@@ -26,8 +27,8 @@ export class StatusService {
 
     delete body.token;
 
-    await this.cacheManager.set('status', JSON.stringify(body), { ttl: null });
+    await this.redisService.set('status', JSON.stringify(body), { ttl: null });
 
-    return { success: true, message: body };
+    return body;
   }
 }
