@@ -5,10 +5,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../modules/prisma/prisma.service';
-import jwt from 'jsonwebtoken';
+import { verify } from 'jsonwebtoken';
 
 const jwtSecret = process.env.JWT_SECRET as string;
-console.log(jwtSecret);
 
 @Injectable()
 export class UserAuthGuard implements CanActivate {
@@ -22,10 +21,7 @@ export class UserAuthGuard implements CanActivate {
     let userId;
 
     try {
-      const decodedToken = jwt.verify(token, jwtSecret) as Record<
-        string,
-        unknown
-      >;
+      const decodedToken = verify(token, jwtSecret) as Record<string, unknown>;
 
       userId = decodedToken.userId;
     } catch (e) {
@@ -55,7 +51,7 @@ export class AuthGuard implements CanActivate {
     const token = request?.headers?.authorization as string;
 
     try {
-      jwt.verify(token, jwtSecret);
+      verify(token, jwtSecret);
     } catch (e) {
       return false;
     }
