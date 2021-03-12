@@ -23,16 +23,15 @@ export class UserAuthGuard implements CanActivate {
     try {
       const decodedToken = verify(token, jwtSecret) as Record<string, unknown>;
 
-      userId = decodedToken.userId;
+      if (decodedToken.userId) userId = decodedToken.userId;
+      else return false;
     } catch (e) {
       return false;
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
-    if (!user) {
-      return false;
-    }
+    if (!user) return false;
 
     request.user = user;
 
