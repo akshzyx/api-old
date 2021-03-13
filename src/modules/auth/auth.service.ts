@@ -7,7 +7,7 @@ import { resetSpotifyApiTokens } from '../../utils/spotify';
 import { PrismaService } from '../prisma/prisma.service';
 const SpotifyWebApi = require('spotify-web-api-node');
 
-const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
+const redirectUri = process.env.SPOTISTATS_AUTH_REDIRECT_URL;
 const jwtSecret = process.env.JWT_SECRET as string;
 
 @Injectable()
