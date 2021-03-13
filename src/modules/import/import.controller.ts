@@ -37,6 +37,15 @@ export class ImportController {
   }
 
   @UseGuards(UserAuthGuard)
+  @Get('/list')
+  async listFiles(@User() user): Promise<Response> {
+    return {
+      success: true,
+      data: await this.importService.listFiles(user),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
   @Get('/download')
   async getDownloadURL(@User() user, @Req() req): Promise<Response> {
     return {

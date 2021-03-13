@@ -28,6 +28,15 @@ export class ImportService {
     return user;
   }
 
+  async listFiles(user) {
+    const files = await this.cloudStorage.listFiles(user);
+
+    return {
+      ...user,
+      imports: files,
+    };
+  }
+
   async getDownloadURL(user, params) {
     const fileName = params?.fileName;
 
