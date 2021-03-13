@@ -37,7 +37,9 @@ export class CloudStorageService {
       },
     });
 
-    fs.unlinkSync(filePath);
+    try {
+      fs.unlinkSync(filePath);
+    } catch (_) {}
 
     return response;
   }
