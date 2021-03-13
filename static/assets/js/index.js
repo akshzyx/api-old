@@ -19,7 +19,7 @@ class ImportStepper {
         body: new URLSearchParams(`code=${code.toUpperCase()}`),
       }).then((res) => res.json());
 
-      if (res.success) {
+      if (res.success && res.data) {
         this._code = code;
         localStorage.setItem("code", this._code);
         this.user = res.data;
@@ -97,12 +97,11 @@ class ImportStepper {
       }).then((res) => res.json());
 
       if (res.success) {
-        $("#streams-imported").text(res.message);
-        $(".import-code").text(res.importCode);
+        $("#streams-imported").text(res.data.message);
         $("#upload-files button").prop("disabled", true);
         this.modalController.openModal(
           "Success",
-          `${res.message} Please follow the instructions of the next step to download the data to your device.`
+          `${res.data.message} Please follow the instructions of the next step to download the data to your device.`
         );
         this.currentStep++;
       } else {

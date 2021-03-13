@@ -1,5 +1,4 @@
 .idea/
-.vscode/
 node_modules/
 build/
 tmp/
@@ -9,6 +8,6 @@ dist/
 .DS_STORE
 data/
 spotistats-a49da-a4f206dcbf07.json
-prisma/migrations
+src/modules/prisma/migrations
 *.log
 spotistats-a49da-be9ea38b0d73.json

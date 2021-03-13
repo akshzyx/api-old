@@ -1,0 +1,145 @@
+import { Injectable } from '@nestjs/common';
+import { User } from '@prisma/client';
+import * as fs from 'fs';
+import ShortUniqueId from 'short-unique-id';
+import { CloudStorageService } from '../cloudStorage/cloudStorage.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
+
+@Injectable()
+export class ImportService {
+  private codeService: _CodeService;
+
+  constructor(
+    redisService: RedisService,
+    prisma: PrismaService,
+    private cloudStorage: CloudStorageService,
+  ) {
+    this.codeService = new _CodeService(redisService, prisma);
+  }
+
+  async getCode(user: User) {
+    const code = await this.codeService.set(user);
+    return code;
+  }
+
+  async postCode(body) {
+    const user = await this.codeService.get(body.code);
+    return user;
+  }
+
+  async getDownloadURL(user, params) {
+    const fileName = params?.fileName;
+
+    const url = await this.cloudStorage.getDownloadURL(
+      `import/${user.id}/${fileName}`,
+    );
+
+    return url;
+  }
+
+  async upload(files, body) {
+    if (files === null || files?.length == 0) {
+      throw Error('missing file(s)');
+    }
+
+    const code = body?.code;
+    if (code == undefined) {
+      throw Error('missing code');
+    }
+
+    let totalStreams = 0;
+
+    const totalContent: string[][] = [];
+
+    files.forEach((file): void => {
+      const validName = /StreamingHistory[0-9][0-9]?.json/g.test(
+        file.originalname,
+      );
+      if (!validName) {
+        throw Error(`invalid file: ${file.originalname}`);
+      }
+
+      const content = JSON.parse(file.buffer);
+      if (content.length > 0 && content.length < 10001) {
+        totalStreams += content.length;
+        ((content as unknown) as Record<string, unknown>[]).forEach((e) => {
+          if (
+            Object.keys(e).length == 4 &&
+            'endTime' in e &&
+            'artistName' in e &&
+            'trackName' in e &&
+            'msPlayed' in e
+          ) {
+            e['endTime'] =
+              Date.parse((e['endTime'] as string).replace(' ', 'T')) / 10000;
+            totalContent.push(Object.values(e) as string[]);
+          } else throw Error(`invalid item (${file.name})`);
+        });
+      } else
+        throw Error(`invalid file length: ${content.length} (${file.name})`);
+    });
+
+    // TODO: filter dupes from totalContent
+
+    const user = await this.codeService.get(code);
+    if (!user) throw Error('invalid code');
+
+    const fileName = `import-${user.id}-${new Date()
+      .toJSON()
+      .slice(0, 10)}.json`;
+    const tempFilePath = `/tmp/${fileName}`;
+    fs.writeFileSync(tempFilePath, JSON.stringify(totalContent));
+
+    await this.cloudStorage.uploadFile(user, fileName, tempFilePath);
+
+    const importedFiles = await this.cloudStorage.listFiles(user);
+
+    this.codeService.remove(code);
+
+    return {
+      user,
+      imports: importedFiles,
+      message: `Succesfully imported ${totalStreams} streams!`,
+    };
+  }
+}
+
+class _CodeService {
+  private _dictionary: string[] = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789'.split('');
+  private _uid = new ShortUniqueId({ length: 6, dictionary: this._dictionary });
+
+  constructor(
+    private redisService: RedisService,
+    private prisma: PrismaService,
+  ) {}
+
+  async set(user: User): Promise<string> {
+    const code = this._uid();
+    if ((await this.redisService.get(this._formatCode(code))) != null) {
+      return await this.set(user);
+    }
+    await this.redisService.set(this._formatCode(code), user.id, {
+      ttl: 10 * 60,
+    });
+    return code;
+  }
+
+  async get(code: string): Promise<User> {
+    const userId: string = await this.redisService.get(this._formatCode(code));
+    if (!userId) return null;
+    return await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+  }
+
+  async remove(code: string) {
+    return await this.redisService.del(this._formatCode(code));
+  }
+
+  private _formatCode(code: string) {
+    return `import.${code.toUpperCase()}`;
+  }
+}
