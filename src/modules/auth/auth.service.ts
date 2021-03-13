@@ -1,15 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { ApiClient, User } from '@prisma/client';
+import { ApiClient, User, UserSettings } from '@prisma/client';
 import { sign } from 'jsonwebtoken';
 import fetch from 'node-fetch';
-import SpotifyWebApi from 'spotify-web-api-node';
 import { decrypt, encrypt } from '../../utils/crypto';
-import { getUserSpotifyApi, resetSpotifyApiTokens } from '../../utils/spotify';
+import { resetSpotifyApiTokens } from '../../utils/spotify';
 import { PrismaService } from '../prisma/prisma.service';
+const SpotifyWebApi = require('spotify-web-api-node');
 
-const spotistatsRedirectUri = process.env.SPOTISTATS_AUTH_REDIRECT_URL;
-const serverUrl = process.env.SERVER_URL;
-const apiPrefix = process.env.API_PREFIX;
+const redirectUri = process.env.SPOTIFY_AUTH_CALLBACK_URL;
 const jwtSecret = process.env.JWT_SECRET as string;
 
 @Injectable()
@@ -24,28 +22,59 @@ export class AuthService {
     return client.id;
   }
 
-  async getToken(user: User) {
-    await getUserSpotifyApi(user.id, this.prisma);
-
-    user = await this.prisma.user.findUnique({
-      where: { id: user.id },
-      include: { settings: true },
+  async getToken(
+    user: User & {
+      settings: UserSettings;
+      apiClient: ApiClient;
+    },
+  ) {
+    user.apiClient.secret = decrypt(user.apiClient.secret);
+    const spotifyApi = new SpotifyWebApi({
+      redirectUri,
+      clientSecret: user.apiClient.secret,
+      clientId: user.apiClient.id,
     });
+    user.settings.refreshToken = decrypt(user.settings.refreshToken);
+    spotifyApi.setRefreshToken(user.settings.refreshToken);
 
-    if (!user) {
-      return null;
+    if (new Date(user.settings.accessTokenExpiration).getTime() < Date.now()) {
+      spotifyApi.refreshAccessToken().then(async (refreshResult) => {
+        spotifyApi.setAccessToken(refreshResult.body.access_token);
+        spotifyApi.setRefreshToken(refreshResult.body.refresh_token);
+
+        const expirationDate = new Date(
+          Date.now() + refreshResult.body.expires_in * 1000,
+        );
+
+        refreshResult.body.refresh_token = encrypt(
+          refreshResult.body.refresh_token,
+        );
+        refreshResult.body.access_token = encrypt(
+          refreshResult.body.access_token,
+        );
+
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            settings: {
+              update: {
+                accessToken: refreshResult.body.access_token,
+                refreshToken: refreshResult.body.refresh_token,
+                accessTokenExpiration: expirationDate,
+              },
+            },
+          },
+        });
+      });
+    } else {
+      user.settings.accessToken = decrypt(user.settings.accessToken);
     }
 
-    // @ts-ignore
     delete user.settings.refreshToken;
-
-    // @ts-ignore
-    user.settings.accessToken = decrypt(user.settings.accessToken);
 
     return user;
   }
 
-  // user: User
   async tokenExchange(body) {
     const code: string = body?.code as string;
     const clientId: string = body?.client_id as string;
@@ -54,7 +83,7 @@ export class AuthService {
     const params = new URLSearchParams();
     params.append('grant_type', 'authorization_code');
     params.append('code', code);
-    params.append('redirect_uri', spotistatsRedirectUri);
+    params.append('redirect_uri', redirectUri);
     params.append('code_verifier', codeVerifier);
 
     const client = await this.prisma.apiClient.findUnique({
@@ -77,7 +106,7 @@ export class AuthService {
     }).then((res) => res.json());
 
     const spotifyApi = new SpotifyWebApi({
-      redirectUri: spotistatsRedirectUri,
+      redirectUri: redirectUri,
       clientSecret: client.secret,
       clientId: client.id,
     });
@@ -91,19 +120,19 @@ export class AuthService {
     const displayName = userData.body.display_name as string;
 
     // @ts-ignore
-    body.refresh_token = encrypt(
+    data.refresh_token = encrypt(
       // @ts-ignore
-      body.refresh_token,
+      data.refresh_token,
     );
-    body.access_token = encrypt(body.access_token);
+    data.access_token = encrypt(data.access_token);
 
     const user = await this.prisma.user.upsert({
       where: { id: userId },
       update: {
         settings: {
           update: {
-            refreshToken: body.refresh_token,
-            accessToken: body.access_token,
+            refreshToken: data.refresh_token,
+            accessToken: data.access_token,
             accessTokenExpiration: expiryDate,
           },
         },
@@ -119,8 +148,8 @@ export class AuthService {
         disabled: false,
         settings: {
           create: {
-            refreshToken: body.refresh_token,
-            accessToken: body.access_token,
+            refreshToken: data.refresh_token,
+            accessToken: data.access_token,
             accessTokenExpiration: expiryDate,
           },
         },
@@ -153,7 +182,7 @@ export class AuthService {
     const authResponse = new _AuthResponse(user, token);
 
     resetSpotifyApiTokens(spotifyApi);
-    return { success: true, data: authResponse };
+    return authResponse;
   }
 }
 

@@ -1,5 +1,7 @@
 import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { AuthGuard } from 'src/guards/auth.guard';
+import { AuthInclude } from 'src/decorators/AuthInclude.decorator';
+import { User } from 'src/decorators/user.decorator';
+import { UserAuthGuard } from 'src/guards/auth.guard';
 import { Response } from '../../interfaces/response';
 import { AuthService } from './auth.service';
 
@@ -15,12 +17,34 @@ export class AuthController {
     };
   }
 
-  @UseGuards(AuthGuard)
   @Post('/token')
   async tokenExchange(@Req() req): Promise<Response> {
     return {
       success: true,
       data: await this.authService.tokenExchange(req.body),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude({ settings: true, apiClient: true })
+  @Get('/token')
+  async getToken(@User() user): Promise<Response> {
+    return {
+      success: true,
+      data: await this.authService.getToken(user),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude({ settings: true, apiClient: true })
+  @Post('/token/refresh')
+  async refreshToken(@User() user, @Req() req) {
+    return {
+      access_token: (await this.authService.getToken(user)).settings
+        .accessToken,
+      refresh_token: req.headers.authorization,
+      token_type: 'Bearer',
+      expires_in: 3599,
     };
   }
 }
