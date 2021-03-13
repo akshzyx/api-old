@@ -1,8 +1,7 @@
 import { Bucket, Storage, UploadResponse } from '@google-cloud/storage';
-import { Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
+import * as fs from 'fs';
 
-@Injectable()
 export class CloudStorageService {
   private _importBucket: Bucket;
 
@@ -37,6 +36,8 @@ export class CloudStorageService {
         cacheControl: 'public, max-age=31536000',
       },
     });
+
+    fs.unlinkSync(filePath);
 
     return response;
   }
