@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
-import iap from 'in-app-purchase';
-import { join } from 'path';
 import { readFileSync } from 'fs';
+import iap from 'in-app-purchase';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -11,9 +10,7 @@ export class PlusService {
 
   constructor(private prisma: PrismaService) {
     const serviceAccount = JSON.parse(
-      readFileSync(
-        join(__dirname, process.env.GOOGLE_SERVICE_ACCOUNT_PATH),
-      ).toString(),
+      readFileSync(process.env.GOOGLE_SERVICE_ACCOUNT_PATH).toString(),
     );
     iap.config({
       appleExcludeOldTransactions: false,

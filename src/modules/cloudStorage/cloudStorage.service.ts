@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import { Bucket, Storage, UploadResponse } from '@google-cloud/storage';
-import path from 'path';
+import { Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 
 @Injectable()
@@ -9,10 +8,7 @@ export class CloudStorageService {
 
   constructor() {
     const storage = new Storage({
-      keyFilename: path.join(
-        __dirname,
-        process.env.GOOGLE_SERVICE_ACCOUNT_PATH,
-      ),
+      keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT_PATH,
       projectId: 'spotistats-a49da',
     });
 
