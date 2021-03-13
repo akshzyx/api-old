@@ -33,7 +33,7 @@ export class UserAuthGuard implements CanActivate {
 
     const include = this.reflector.get<Prisma.UserInclude[]>(
       'includes',
-      context.getClass(),
+      context.getHandler(),
     );
 
     const query: Prisma.UserFindUniqueArgs = { where: { id: userId } };
