@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { ApiClient, User, UserSettings } from '@prisma/client';
 import { sign } from 'jsonwebtoken';
 import fetch from 'node-fetch';
@@ -182,6 +183,35 @@ export class AuthService {
 
     resetSpotifyApiTokens(spotifyApi);
     return authResponse;
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_11PM)
+  async updateApiClientCount() {
+    const apiClients = await this.prisma.apiClient.findMany({
+      include: {
+        users: {
+          select: {
+            id: false,
+            displayName: false,
+            disabled: false,
+            userSettingsId: false,
+            apiClientId: true,
+            isPlus: false,
+          },
+        },
+      },
+    });
+
+    apiClients.forEach(async (apiClient) => {
+      await this.prisma.apiClient.update({
+        where: {
+          id: apiClient.id,
+        },
+        data: {
+          count: apiClient.users.length,
+        },
+      });
+    });
   }
 }
 
