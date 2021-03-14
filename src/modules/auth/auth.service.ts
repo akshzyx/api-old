@@ -66,9 +66,8 @@ export class AuthService {
           },
         });
       });
-    } else {
-      user.settings.accessToken = decrypt(user.settings.accessToken);
     }
+    user.settings.accessToken = decrypt(user.settings.accessToken);
 
     delete user.settings.refreshToken;
 
