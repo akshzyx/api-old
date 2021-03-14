@@ -10,6 +10,6 @@ export class LyricsController {
 
   @Get('/delimiters')
   getDelimiters(): Response {
-    return { success: true, data: this.lyricsService.getDelimiters() };
+    return { data: this.lyricsService.getDelimiters() };
   }
 }

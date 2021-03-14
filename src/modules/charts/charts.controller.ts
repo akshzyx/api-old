@@ -15,7 +15,6 @@ export class ChartsController {
     @Param('date') date: string,
   ): Promise<Response> {
     return {
-      success: true,
       data: await this.chartsService.getCharts(type, country, date),
     };
   }

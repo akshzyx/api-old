@@ -9,7 +9,6 @@ export class AppController {
   ping() {
     return {
       success: true,
-      data: null,
     };
   }
 

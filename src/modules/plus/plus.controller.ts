@@ -14,7 +14,6 @@ export class PlusController {
   @Post()
   async postReceipt(@User() user, @Req() req): Promise<Response> {
     return {
-      success: true,
       data: await this.plusService.postReceipt(user, req.body),
     };
   }

@@ -12,7 +12,6 @@ export class StatusController {
   async getStatus(): Promise<Response> {
     // await this.redisService.set('status', Date.now().toString());
     return {
-      success: true,
       data: await this.statusService.getStatus(),
     };
   }
@@ -20,7 +19,6 @@ export class StatusController {
   @Post()
   async postStatus(@Req() req): Promise<Response> {
     return {
-      success: true,
       data: await this.statusService.postStatus(req.body),
     };
   }

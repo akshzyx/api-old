@@ -12,7 +12,6 @@ export class AuthController {
   @Get('/client')
   async getClient(): Promise<Response> {
     return {
-      success: true,
       data: await this.authService.getClient(),
     };
   }
@@ -20,7 +19,6 @@ export class AuthController {
   @Post('/token')
   async tokenExchange(@Req() req): Promise<Response> {
     return {
-      success: true,
       data: await this.authService.tokenExchange(req.body),
     };
   }
@@ -29,10 +27,7 @@ export class AuthController {
   @AuthInclude({ settings: true, apiClient: true })
   @Get('/token')
   async getToken(@User() user): Promise<Response> {
-    return {
-      success: true,
-      data: await this.authService.getToken(user),
-    };
+    return { data: await this.authService.getToken(user) };
   }
 
   @UseGuards(UserAuthGuard)

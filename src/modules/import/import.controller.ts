@@ -23,7 +23,6 @@ export class ImportController {
   @Get('/code')
   async getCode(@User() user): Promise<Response> {
     return {
-      success: true,
       data: await this.importService.getCode(user),
     };
   }
@@ -31,7 +30,6 @@ export class ImportController {
   @Post('/code')
   async postCode(@Req() req): Promise<Response> {
     return {
-      success: true,
       data: await this.importService.postCode(req.body),
     };
   }
@@ -40,7 +38,6 @@ export class ImportController {
   @Get('/list')
   async listFiles(@User() user): Promise<Response> {
     return {
-      success: true,
       data: await this.importService.listFiles(user),
     };
   }
@@ -49,7 +46,6 @@ export class ImportController {
   @Get('/download')
   async getDownloadURL(@User() user, @Req() req): Promise<Response> {
     return {
-      success: true,
       data: await this.importService.getDownloadURL(user, req.query),
     };
   }
@@ -58,7 +54,6 @@ export class ImportController {
   @UseInterceptors(FilesInterceptor('files'))
   async upload(@UploadedFiles() files, @Req() req): Promise<Response> {
     return {
-      success: true,
       data: await this.importService.upload(files, req.body),
     };
   }
