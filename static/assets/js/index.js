@@ -23,6 +23,7 @@ class ImportStepper {
         this._code = code;
         localStorage.setItem("code", this._code);
         this.user = res.data;
+        $("#display-name").text(`Logged in as ${this.user.displayName}`)
         $("#import-code input[type='text']")
           .val(this._code)
           .prop("disabled", true);
