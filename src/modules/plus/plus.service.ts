@@ -1,11 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import * as iap from 'in-app-purchase';
+import { AuthService } from '../auth/auth.service';
 import { PrismaService } from '../prisma/prisma.service';
+const SpotifyWebApi = require('spotify-web-api-node');
 
 @Injectable()
 export class PlusService {
-  constructor(private prisma: PrismaService) {
+  constructor(private prisma: PrismaService, private authService: AuthService) {
     const serviceAccount = JSON.parse(
       readFileSync(process.env.GOOGLE_SERVICE_ACCOUNT_PATH).toString(),
     );
@@ -66,5 +68,35 @@ export class PlusService {
       return false;
     }
     return true;
+  }
+
+  async userStats(params) {
+    const userid = params?.userid;
+    const spotifyApi = await this.getApi(userid);
+
+    const stats = (
+      await spotifyApi.getMyRecentlyPlayedTracks({
+        limit: 50,
+      })
+    ).body;
+
+    return stats;
+  }
+
+  async getApi(userid) {
+    let user = await this.prisma.user.findUnique({
+      where: { id: userid },
+      include: { apiClient: true, settings: true },
+    });
+
+    if (!user.settings.sharesStats) {
+      throw new HttpException('user doesnt share stats', 400);
+    }
+
+    user = await this.authService.getToken(user);
+    const spotifyApi = new SpotifyWebApi();
+    spotifyApi.setAccessToken(user.settings.accessToken);
+
+    return spotifyApi;
   }
 }

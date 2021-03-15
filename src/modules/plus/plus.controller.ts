@@ -1,7 +1,15 @@
-import { Controller, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
-import { AuthInclude } from 'src/decorators/AuthInclude.decorator';
-import { User } from 'src/decorators/user.decorator';
-import { UserAuthGuard } from 'src/guards/auth.guard';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthInclude } from '../../decorators/AuthInclude.decorator';
+import { User } from '../../decorators/user.decorator';
+import { UserAuthGuard } from '../../guards/auth.guard';
 import { Response } from '../../interfaces/response';
 import { PlusService } from './plus.service';
 
@@ -12,10 +20,20 @@ export class PlusController {
   @UseGuards(UserAuthGuard)
   @AuthInclude({ inAppPurchase: true })
   @HttpCode(200)
-  @Post()
+  @Post(['/receipt', '']) // TODO remove '' after app is updated
   async postReceipt(@User() user, @Req() req): Promise<Response> {
     return {
       data: await this.plusService.postReceipt(user, req.body),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Get('/stats/:userid') // TODO remove '' after app is updated
+  async userStats(@Param() params): Promise<Response> {
+    return {
+      data: await this.plusService.userStats(params),
     };
   }
 }

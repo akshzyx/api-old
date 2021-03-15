@@ -28,7 +28,12 @@ export class AuthService {
       settings: UserSettings;
       apiClient: ApiClient;
     },
-  ) {
+  ): Promise<
+    User & {
+      settings: UserSettings;
+      apiClient: ApiClient;
+    }
+  > {
     user.apiClient.secret = decrypt(user.apiClient.secret);
     const spotifyApi = new SpotifyWebApi({
       redirectUri,
