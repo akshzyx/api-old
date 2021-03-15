@@ -9,9 +9,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { AuthInclude } from 'src/decorators/AuthInclude.decorator';
-import { User } from 'src/decorators/user.decorator';
-import { UserAuthGuard } from 'src/guards/auth.guard';
+import { AuthInclude } from '../../decorators/AuthInclude.decorator';
+import { User } from '../../decorators/user.decorator';
+import { UserAuthGuard } from '../../guards/auth.guard';
 import { Response } from '../../interfaces/response';
 import { ImportService } from './import.service';
 

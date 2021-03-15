@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { LyricsService } from './lyrics.service';
 import { Response } from '../../interfaces/response';
-import { AuthGuard } from 'src/guards/auth.guard';
+import { AuthGuard } from '../../guards/auth.guard';
 
 @Controller('/lyrics')
 @UseGuards(AuthGuard)

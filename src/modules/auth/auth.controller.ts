@@ -6,9 +6,9 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { AuthInclude } from 'src/decorators/AuthInclude.decorator';
-import { User } from 'src/decorators/user.decorator';
-import { UserAuthGuard } from 'src/guards/auth.guard';
+import { AuthInclude } from '../../decorators/AuthInclude.decorator';
+import { User } from '../../decorators/user.decorator';
+import { UserAuthGuard } from '../../guards/auth.guard';
 import { Response } from '../../interfaces/response';
 import { AuthService } from './auth.service';
 

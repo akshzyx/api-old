@@ -1,7 +1,7 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ChartsService } from './charts.service';
 import { Response } from '../../interfaces/response';
-import { AuthGuard } from 'src/guards/auth.guard';
+import { AuthGuard } from '../../guards/auth.guard';
 
 @Controller('/charts')
 @UseGuards(AuthGuard)
