@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  HttpCode,
   Post,
   Req,
   UploadedFiles,
@@ -27,6 +28,7 @@ export class ImportController {
     };
   }
 
+  @HttpCode(200)
   @Post('/code')
   async postCode(@Req() req): Promise<Response> {
     return {
@@ -50,6 +52,7 @@ export class ImportController {
     };
   }
 
+  @HttpCode(200)
   @Post('/upload')
   @UseInterceptors(FilesInterceptor('files'))
   async upload(@UploadedFiles() files, @Req() req): Promise<Response> {

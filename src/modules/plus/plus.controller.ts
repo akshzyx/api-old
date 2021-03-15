@@ -1,4 +1,4 @@
-import { Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthInclude } from 'src/decorators/AuthInclude.decorator';
 import { User } from 'src/decorators/user.decorator';
 import { UserAuthGuard } from 'src/guards/auth.guard';
@@ -11,6 +11,7 @@ export class PlusController {
 
   @UseGuards(UserAuthGuard)
   @AuthInclude({ inAppPurchase: true })
+  @HttpCode(200)
   @Post()
   async postReceipt(@User() user, @Req() req): Promise<Response> {
     return {

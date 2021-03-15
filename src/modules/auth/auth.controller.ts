@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthInclude } from 'src/decorators/AuthInclude.decorator';
 import { User } from 'src/decorators/user.decorator';
 import { UserAuthGuard } from 'src/guards/auth.guard';
@@ -16,6 +23,7 @@ export class AuthController {
     };
   }
 
+  @HttpCode(200)
   @Post('/token')
   async tokenExchange(@Req() req): Promise<Response> {
     return {
@@ -32,6 +40,7 @@ export class AuthController {
 
   @UseGuards(UserAuthGuard)
   @AuthInclude({ settings: true, apiClient: true })
+  @HttpCode(200)
   @Post('/token/refresh')
   async refreshToken(@User() user, @Req() req) {
     return {
