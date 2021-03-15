@@ -8,7 +8,9 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class ChartsService {
   private readonly logger = new Logger('Charts');
 
-  constructor(private redisService: RedisService) {}
+  constructor(private redisService: RedisService) {
+    this.handleCron();
+  }
 
   @Cron(CronExpression.EVERY_2_HOURS)
   async handleCron() {
@@ -48,7 +50,7 @@ export class ChartsService {
   }
 
   async saveCharts() {
-    const options = { ttl: 10 * 60 };
+    const options = { ttl: 0 };
     await this.redisService.set(
       'charts.regional.global.daily',
       JSON.stringify(await this._getCharts('regional', 'global', 'daily')),
