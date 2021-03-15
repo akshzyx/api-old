@@ -1,17 +1,8 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
-import { AuthGuard } from '../../guards/auth.guard';
+import { Controller, Get, HttpCode, Post, Req } from '@nestjs/common';
 import { Response } from '../../interfaces/response';
 import { StatusService } from './status.service';
 
 @Controller('/status')
-@UseGuards(AuthGuard)
 export class StatusController {
   constructor(private statusService: StatusService) {}
 
@@ -23,6 +14,7 @@ export class StatusController {
     };
   }
 
+  @UseGuards(AuthGuard)
   @HttpCode(200)
   @Post()
   async postStatus(@Req() req): Promise<Response> {
