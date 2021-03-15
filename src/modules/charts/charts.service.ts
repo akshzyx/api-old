@@ -10,7 +10,7 @@ export class ChartsService {
 
   constructor(private redisService: RedisService) {}
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_2_HOURS)
   async handleCron() {
     this.logger.log('Running saveCharts...');
     await this.saveCharts();
