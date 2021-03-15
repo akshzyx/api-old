@@ -19,7 +19,7 @@ class ImportStepper {
         body: new URLSearchParams(`code=${code.toUpperCase()}`),
       }).then((res) => res.json());
 
-      if (res.success && res.data) {
+      if (res.data) {
         this._code = code;
         localStorage.setItem('code', this._code);
         this.user = res.data;
@@ -70,7 +70,7 @@ class ImportStepper {
     const code = $("#import-code input[type='text']").val();
     if (code && code.length == 6) {
       const res = await this.getUser(code);
-      if (res.success) {
+      if (res.data) {
       } else if (res.message == 'no user found') {
         this.modalController.openModal('Invalid code', 'Please try try again');
       } else {
@@ -97,7 +97,7 @@ class ImportStepper {
         body: form_data,
       }).then((res) => res.json());
 
-      if (res.success) {
+      if (res.data) {
         $('#streams-imported').text(res.data.message);
         $('#upload-files button').prop('disabled', true);
         this.modalController.openModal(
