@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 import * as fs from 'fs';
 import ShortUniqueId from 'short-unique-id';
@@ -49,12 +49,12 @@ export class ImportService {
 
   async upload(files, body) {
     if (files === null || files?.length == 0) {
-      throw Error('missing file(s)');
+      throw new HttpException('missing file(s)', 400);
     }
 
     const code = body?.code;
     if (code == undefined) {
-      throw Error('missing code');
+      throw new HttpException('missing code', 400);
     }
 
     let totalStreams = 0;
@@ -66,7 +66,7 @@ export class ImportService {
         file.originalname,
       );
       if (!validName) {
-        throw Error(`invalid file: ${file.originalname}`);
+        throw new HttpException(`invalid file: ${file.originalname}`, 400);
       }
 
       const content = JSON.parse(file.buffer);
@@ -83,16 +83,19 @@ export class ImportService {
             e['endTime'] =
               Date.parse((e['endTime'] as string).replace(' ', 'T')) / 10000;
             totalContent.push(Object.values(e) as string[]);
-          } else throw Error(`invalid item (${file.name})`);
+          } else throw new HttpException(`invalid item (${file.name})`, 400);
         });
       } else
-        throw Error(`invalid file length: ${content.length} (${file.name})`);
+        throw new HttpException(
+          `invalid file length: ${content.length} (${file.name})`,
+          400,
+        );
     });
 
     // TODO: filter dupes from totalContent
 
     const user = await this.codeService.get(code);
-    if (!user) throw Error('invalid code');
+    if (!user) throw new HttpException('invalid code', 400);
 
     const fileName = `import-${user.id}-${new Date()
       .toJSON()
