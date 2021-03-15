@@ -9,19 +9,20 @@
 }
 
 @font-face {
+  font-family: "Open Sans Bold";
+  src: url("../font/Open-Sans-Bold-Italic.ttf") format("truetype");
+  font-style: italic;
+}
+
+@font-face {
   font-family: "Open Sans Regular";
   src: url("../font/Open-Sans-Regular.ttf") format("truetype");
 }
 
-h1,
-h2,
-h3 {
+h1 *,
+h2 * ,
+h3 * {
   font-family: "Open Sans Bold", sans-serif;
-  font-weight: 500;
-}
-
-p {
-  font-weight: 400;
 }
 
 a {
@@ -39,7 +40,7 @@ a {
 
 b {
   font-family: "Open Sans Bold", sans-serif;
-  font-weight: 600;
+  /* font-weight: 600; */
 }
 
 html,
@@ -74,7 +75,7 @@ footer * {
   color: rgba(255, 255, 255, 0.3);
   vertical-align: center;
   font-family: "Open Sans Bold", sans-serif;
-  font-weight: 500;
+  /* font-weight: 500; */
 }
 
 main.container {
@@ -106,7 +107,8 @@ main.container {
 }
 @media (min-width: 768px) {
   .container {
-    width: 750px;
+    padding-right: 30px;
+    padding-left: 30px;
   }
 }
 @media (min-width: 992px) {
@@ -133,7 +135,6 @@ input::-webkit-inner-spin-button {
 
 input[type="text"] {
   border: none;
-  /* border-bottom: 3px solid var(--secondary); */
   background-color: rgb(24, 24, 28);
   color: white;
   font-size: 2.1rem;

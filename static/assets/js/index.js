@@ -57,10 +57,14 @@ class ImportStepper {
   async nextStep(e) {
     if (e && e.preventDefault) e.preventDefault();
     this.loader.show();
-    if (this.currentStep == 0) {
-      await this.step1();
-    } else if (this.currentStep == 1) {
-      await this.step2();
+    try {
+      if (this.currentStep == 0) {
+        await this.step1();
+      } else if (this.currentStep == 1) {
+        await this.step2();
+      }
+    } catch (e) {
+      this.modalController.openModal('Error', e.message);
     }
     this.updateInterface();
     this.loader.hide();
@@ -80,16 +84,20 @@ class ImportStepper {
   }
 
   async step2() {
-    return new Promise(async (resolve, _) => {
-      var form_data = new FormData();
+    return new Promise(async (resolve, reject) => {
+      let form_data = new FormData();
       form_data.append('code', this._code.toUpperCase());
 
-      var totalfiles = document.getElementById('files').files.length;
-      for (var index = 0; index < totalfiles; index++) {
-        form_data.append(
-          'files',
-          document.getElementById('files').files[index],
-        );
+      const files = document.getElementById('files').files;
+      for (let i = 0; i < files.length; i++) {
+        if (!/StreamingHistory[0-9][0-9]?.json/g.test(files[i].name)) {
+          return reject(
+            new Error(
+              `Please only select files named like <i>StreamingHistoryX.json</i><br><br>File name: ${files[i].name}`,
+            ),
+          );
+        }
+        form_data.append('files', files[i]);
       }
 
       const res = await fetch(`${this.SERVER_URL}/import/upload`, {
@@ -136,8 +144,8 @@ class ModalController {
   openModal(title, body) {
     var modal = $(this.template);
 
-    modal.find('.title').text(title);
-    modal.find('.body').text(body);
+    modal.find('.title').html(title);
+    modal.find('.body').html(body);
 
     modal.find('span.close').on('click', function () {
       $(this).parent().parent().remove();
@@ -162,5 +170,18 @@ $(document).ready(function () {
   if (location.hash == '#guide') {
     $('#page-title').text('Import Guide');
     $('.guide-hide').hide();
+  }
+
+  if (
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent,
+    ) ||
+    typeof window.orientation !== 'undefined' ||
+    navigator.userAgent.indexOf('IEMobile') !== -1
+  ) {
+    importStepper.modalController.openModal(
+      'Notice',
+      "It looks like your on a mobile device (or tablet). Uploading files from this device may not work and it's highly recommended to do this on a desktop machine.",
+    );
   }
 });
