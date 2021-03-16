@@ -41,6 +41,10 @@ export class PlusService {
   }
 
   async validate(user, receipt): Promise<boolean> {
+    if (typeof receipt == 'string') {
+      receipt = JSON.parse(receipt);
+    }
+
     const validatedData = await iap.validate(receipt);
     const purchaseData = await iap.getPurchaseData(validatedData);
 
