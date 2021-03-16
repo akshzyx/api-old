@@ -50,7 +50,7 @@ export class ChartsService {
   }
 
   async saveCharts() {
-    const options = { ttl: 0 };
+    const options = { ttl: 86400 };
     await this.redisService.set(
       'charts.regional.global.daily',
       JSON.stringify(await this._getCharts('regional', 'global', 'daily')),
