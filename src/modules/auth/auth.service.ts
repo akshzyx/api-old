@@ -76,6 +76,7 @@ export class AuthService {
     user.settings.accessToken = decrypt(user.settings.accessToken);
 
     delete user.settings.refreshToken;
+    delete user.apiClient.secret;
 
     return user;
   }
