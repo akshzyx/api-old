@@ -88,16 +88,16 @@ export class PlusService {
   }
 
   async getApi(userid) {
-    let user = await this.prisma.user.findUnique({
+    let dbUser = await this.prisma.user.findUnique({
       where: { id: userid },
       include: { apiClient: true, settings: true },
     });
 
-    if (!user.settings.sharesStats) {
+    if (!dbUser.settings.sharesStats) {
       throw new HttpException('user doesnt share stats', 400);
     }
 
-    user = await this.authService.getToken(user);
+    const user = await this.authService.getToken(dbUser);
     const spotifyApi = new SpotifyWebApi();
     spotifyApi.setAccessToken(user.settings.accessToken);
 
