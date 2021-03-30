@@ -7,6 +7,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 @Injectable()
 export class ChartsService {
   private readonly logger = new Logger('Charts');
+  options = { ttl: 0 };
 
   constructor(private redisService: RedisService) {
     this.handleCron();
@@ -20,7 +21,6 @@ export class ChartsService {
 
   async getCharts(type, country, date) {
     const data = {
-      snapshot: await this.redisService.get('charts.snapshot'),
       data: JSON.parse(
         await this.redisService.get(`charts.${type}.${country}.${date}`),
       ), // TODO: is this safe?
@@ -50,31 +50,35 @@ export class ChartsService {
   }
 
   async saveCharts() {
-    const options = { ttl: 86400 };
-    await this.redisService.set(
-      'charts.regional.global.daily',
-      JSON.stringify(await this._getCharts('regional', 'global', 'daily')),
-      options,
-    );
-    await this.redisService.set(
-      'charts.regional.global.weekly',
-      JSON.stringify(await this._getCharts('regional', 'global', 'weekly')),
-      options,
-    );
-    await this.redisService.set(
-      'charts.viral.global.daily',
-      JSON.stringify(await this._getCharts('viral', 'global', 'daily')),
-      options,
-    );
-    await this.redisService.set(
-      'charts.viral.global.weekly',
-      JSON.stringify(await this._getCharts('viral', 'global', 'weekly')),
-      options,
-    );
+    this._saveChart('regional', 'global', 'daily');
+    this._saveChart('regional', 'global', 'weekly');
+    this._saveChart('viral', 'global', 'daily');
+    this._saveChart('viral', 'global', 'weekly');
     await this.redisService.set(
       'charts.snapshot',
       new Date().toISOString(),
-      options,
+      this.options,
+    );
+  }
+
+  async _saveChart(type, country, date) {
+    const charts = await this._getCharts(type, country, date);
+
+    if (
+      typeof charts != 'object' ||
+      (charts.length != 50 && charts.length != 200) ||
+      !charts[0].id ||
+      !charts[0].artist ||
+      !charts[0].track ||
+      !charts[0].position
+    ) {
+      return;
+    }
+
+    await this.redisService.set(
+      `charts.${type}.${country}.${date}`,
+      JSON.stringify(charts),
+      this.options,
     );
   }
 }
