@@ -31,7 +31,6 @@ export class AuthService {
   ): Promise<
     User & {
       settings: UserSettings;
-      apiClient: ApiClient;
     }
   > {
     user.apiClient.secret = decrypt(user.apiClient.secret);
@@ -76,7 +75,7 @@ export class AuthService {
     user.settings.accessToken = decrypt(user.settings.accessToken);
 
     delete user.settings.refreshToken;
-    delete user.apiClient.secret;
+    delete user.apiClient;
 
     return user;
   }
