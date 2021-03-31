@@ -41,7 +41,7 @@ export class PlusService {
   }
 
   async validate(user, receipt): Promise<boolean> {
-    if (typeof receipt == 'string') {
+    if (typeof receipt == 'string' && receipt[0] == '{') {
       receipt = JSON.parse(receipt);
     }
 
