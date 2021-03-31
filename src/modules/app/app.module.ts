@@ -5,6 +5,7 @@ import { ChartsModule } from '../charts/charts.module';
 import { CloudStorageModule } from '../cloudStorage/cloudStorage.module';
 import { ImportModule } from '../import/import.module';
 import { LyricsModule } from '../lyrics/lyrics.module';
+import { MiscModule } from '../misc/misc.module';
 import { PlusModule } from '../plus/plus.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RedisModule } from '../redis/redis.module';
@@ -23,6 +24,7 @@ import { AppService } from './app.service';
     ChartsModule,
     PlusModule,
     StatusModule,
+    MiscModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
