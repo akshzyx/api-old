@@ -13,7 +13,9 @@ const jwtSecret = process.env.JWT_SECRET as string;
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {
+    this.updateApiClientCount();
+  }
 
   async getClient() {
     const client: ApiClient = await this.prisma.apiClient.findFirst({
