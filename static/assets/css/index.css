@@ -9,20 +9,19 @@
 }
 
 @font-face {
-  font-family: "Open Sans Bold";
-  src: url("../font/Open-Sans-Bold-Italic.ttf") format("truetype");
-  font-style: italic;
-}
-
-@font-face {
   font-family: "Open Sans Regular";
   src: url("../font/Open-Sans-Regular.ttf") format("truetype");
 }
 
-h1 *,
-h2 * ,
-h3 * {
+h1,
+h2,
+h3 {
   font-family: "Open Sans Bold", sans-serif;
+  font-weight: 500;
+}
+
+p {
+  font-weight: 400;
 }
 
 a {
@@ -40,7 +39,7 @@ a {
 
 b {
   font-family: "Open Sans Bold", sans-serif;
-  /* font-weight: 600; */
+  font-weight: 600;
 }
 
 html,
