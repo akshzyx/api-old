@@ -24,7 +24,14 @@ export class ImportService {
   }
 
   async postCode(body) {
+    const code = body?.code;
+    if (code == undefined) {
+      throw new HttpException('missing code', 400);
+    }
+
     const user = await this.codeService.get(body.code);
+    if (!user) throw new HttpException('invalid code', 400);
+
     return user;
   }
 
@@ -56,6 +63,9 @@ export class ImportService {
     if (code == undefined) {
       throw new HttpException('missing code', 400);
     }
+
+    const user = await this.codeService.get(code);
+    if (!user) throw new HttpException('invalid code', 400);
 
     let totalStreams = 0;
 
@@ -93,9 +103,6 @@ export class ImportService {
     });
 
     // TODO: filter dupes from totalContent
-
-    const user = await this.codeService.get(code);
-    if (!user) throw new HttpException('invalid code', 400);
 
     const fileName = `import-${user.id}-${new Date()
       .toJSON()
