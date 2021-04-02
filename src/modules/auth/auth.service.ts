@@ -122,9 +122,7 @@ export class AuthService {
     spotifyApi.setRefreshToken(data.refresh_token);
     const expiryDate = new Date(Date.now() + data.expires_in * 1000);
 
-    const userData = await spotifyApi.getMe();
-    const userId = userData.body.id;
-    const displayName = userData.body.display_name as string;
+    const userinfo = (await spotifyApi.getMe()).body;
 
     // @ts-ignore
     data.refresh_token = encrypt(
@@ -134,7 +132,7 @@ export class AuthService {
     data.access_token = encrypt(data.access_token);
 
     const user = await this.prisma.user.upsert({
-      where: { id: userId },
+      where: { id: userinfo.id },
       update: {
         settings: {
           update: {
@@ -148,10 +146,19 @@ export class AuthService {
             id: spotifyApi.getClientId(),
           },
         },
+        email: userinfo.email,
+        displayName: userinfo.display_name,
+        country: userinfo.country,
+        image: userinfo.images[0]?.url,
+        product: userinfo.product,
       },
       create: {
-        id: userId,
-        displayName: displayName,
+        id: userinfo.id,
+        email: userinfo.email,
+        displayName: userinfo.display_name,
+        country: userinfo.country,
+        image: userinfo.images[0]?.url,
+        product: userinfo.product,
         disabled: false,
         settings: {
           create: {
@@ -185,7 +192,10 @@ export class AuthService {
     user.settings.refreshToken = decrypt(user.settings.refreshToken);
     user.settings.accessToken = decrypt(user.settings.accessToken);
 
-    const token = sign({ userId, displayName }, jwtSecret);
+    const token = sign(
+      { userId: userinfo.id, displayName: userinfo.display_name },
+      jwtSecret,
+    );
     const authResponse = new _AuthResponse(user, token);
 
     resetSpotifyApiTokens(spotifyApi);
