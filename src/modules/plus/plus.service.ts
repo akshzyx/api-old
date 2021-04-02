@@ -99,8 +99,9 @@ export class PlusService {
     const userid = params?.userid;
     const spotifyApi = await this.getApi(userid);
 
-    const [recentlyPlayed, topArtists, topTracks] = (
+    const [userInfo, recentlyPlayed, topArtists, topTracks] = (
       await Promise.all([
+        spotifyApi.getUser(userid),
         spotifyApi.getMyRecentlyPlayedTracks({
           limit: 50,
         }),
@@ -113,10 +114,11 @@ export class PlusService {
           time_range: 'short_term',
         }),
       ])
-    ).map((a) => a.body.items);
+    ).map((a) => a.body);
 
     return {
-      recentlyPlayed,
+      userInfo,
+      recentlyPlayed: recentlyPlayed,
       topArtists,
       topTracks,
     };
