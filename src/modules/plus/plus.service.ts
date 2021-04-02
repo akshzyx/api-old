@@ -33,7 +33,7 @@ export class PlusService {
       throw new HttpException('invalid token', 400);
     }
 
-    const user = this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: {
         id: userid,
       },
