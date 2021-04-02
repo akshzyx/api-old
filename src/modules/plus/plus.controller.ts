@@ -27,16 +27,6 @@ export class PlusController {
     };
   }
 
-  @UseGuards(UserAuthGuard)
-  @AuthInclude()
-  @HttpCode(200)
-  @Get('/stats/:userid') // TODO remove '' after app is updated
-  async userStats(@Param() params): Promise<Response> {
-    return {
-      data: await this.plusService.userStats(params),
-    };
-  }
-
   @HttpCode(200)
   @Get('/status/:userid') // TODO remove '' after app is updated
   async getStatus(
