@@ -1,9 +1,12 @@
 import { HttpException, Inject, Injectable } from '@nestjs/common';
+import { User } from '@prisma/client';
 import { readFileSync } from 'fs';
 import * as iap from 'in-app-purchase';
 import { AuthService } from '../auth/auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 const SpotifyWebApi = require('spotify-web-api-node');
+
+const statusToken = process.env.STATUS_TOKEN;
 
 @Injectable()
 export class PlusService {
@@ -23,6 +26,24 @@ export class PlusService {
 
   async setup() {
     await iap.setup();
+  }
+
+  async getStatus(headers, userid: string): Promise<User> {
+    if (headers?.authorization != statusToken) {
+      throw new HttpException('invalid token', 400);
+    }
+
+    const user = this.prisma.user.findUnique({
+      where: {
+        id: userid,
+      },
+    });
+
+    if (user == null) {
+      throw new HttpException('no user found', 400);
+    }
+
+    return user;
   }
 
   async postReceipt(user, body) {

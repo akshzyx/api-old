@@ -36,4 +36,15 @@ export class PlusController {
       data: await this.plusService.userStats(params),
     };
   }
+
+  @HttpCode(200)
+  @Get('/status/:userid') // TODO remove '' after app is updated
+  async getStatus(
+    @Req() req,
+    @Param('userid') userid: string,
+  ): Promise<Response> {
+    return {
+      data: await this.plusService.getStatus(req.headers, userid),
+    };
+  }
 }
