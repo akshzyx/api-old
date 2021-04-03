@@ -23,8 +23,8 @@ model User {
   apiClientId     String
   isPlus          Boolean         @default(false)
   inAppPurchase   InAppPurchase[]
-  friends         User[]          @relation("friends")
-  friendsRelation User[]          @relation("friends")
+  followedBy      User[]          @relation("UserFollows", references: [id])
+  following       User[]          @relation("UserFollows", references: [id])
 }
 
 model UserSettings {

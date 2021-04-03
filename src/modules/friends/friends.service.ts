@@ -40,6 +40,52 @@ export class FriendsService {
     return users;
   }
 
+  async getFollowers(userid) {
+    return (
+      await this.prisma.user.findUnique({
+        where: {
+          id: userid,
+        },
+        include: {
+          followedBy: true,
+        },
+      })
+    ).followedBy.map((user) => {
+      return {
+        id: user.id,
+        displayName: user.displayName,
+        image: user.image,
+        country: user.country,
+      };
+    });
+  }
+
+  async followUser(user, userid) {
+    return await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        following: {
+          connect: { id: userid },
+        },
+      },
+    });
+  }
+
+  async unfollowUser(user, userid) {
+    return await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        following: {
+          disconnect: { id: userid },
+        },
+      },
+    });
+  }
+
   async userStats(params) {
     const userid = params?.userid;
     const spotifyApi = await this.getApi(userid);

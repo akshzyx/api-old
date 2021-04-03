@@ -1,12 +1,15 @@
 import {
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuthInclude } from '../../decorators/AuthInclude.decorator';
+import { User } from '../../decorators/user.decorator';
 import { AuthGuard, UserAuthGuard } from '../../guards/auth.guard';
 import { Response } from '../../interfaces/response';
 import { FriendsService } from './friends.service';
@@ -26,6 +29,35 @@ export class FriendsController {
 
   @UseGuards(UserAuthGuard)
   @AuthInclude()
+  @HttpCode(200)
+  @Get('/:userid/followers')
+  async getFollowers(@Param('userid') userid): Promise<Response> {
+    return {
+      data: await this.friendsService.getFollowers(userid),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Put('/:userid/followers')
+  async followUser(@User() user, @Param('userid') userid): Promise<Response> {
+    return {
+      data: await this.friendsService.followUser(user, userid),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Delete('/:userid/followers')
+  async unfollowUser(@User() user, @Param('userid') userid): Promise<Response> {
+    return {
+      data: await this.friendsService.unfollowUser(user, userid),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
   @HttpCode(200)
   @Get('/stats/:userid')
   async userStats(@Param() params): Promise<Response> {
