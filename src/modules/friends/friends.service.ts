@@ -61,7 +61,8 @@ export class FriendsService {
   }
 
   async followUser(user, userid) {
-    return await this.prisma.user.update({
+    if (user.id == userid) return;
+    await this.prisma.user.update({
       where: {
         id: user.id,
       },
@@ -74,7 +75,8 @@ export class FriendsService {
   }
 
   async unfollowUser(user, userid) {
-    return await this.prisma.user.update({
+    if (user.id == userid) return;
+    await this.prisma.user.update({
       where: {
         id: user.id,
       },
@@ -83,6 +85,17 @@ export class FriendsService {
           disconnect: { id: userid },
         },
       },
+    });
+  }
+
+  async getFollowing(user) {
+    return user.following.map((user) => {
+      return {
+        id: user.id,
+        displayName: user.displayName,
+        image: user.image,
+        country: user.country,
+      };
     });
   }
 

@@ -41,19 +41,25 @@ export class FriendsController {
   @AuthInclude()
   @HttpCode(200)
   @Put('/:userid/followers')
-  async followUser(@User() user, @Param('userid') userid): Promise<Response> {
-    return {
-      data: await this.friendsService.followUser(user, userid),
-    };
+  async followUser(@User() user, @Param('userid') userid) {
+    await this.friendsService.followUser(user, userid);
   }
 
   @UseGuards(UserAuthGuard)
   @AuthInclude()
   @HttpCode(200)
   @Delete('/:userid/followers')
-  async unfollowUser(@User() user, @Param('userid') userid): Promise<Response> {
+  async unfollowUser(@User() user, @Param('userid') userid) {
+    await this.friendsService.unfollowUser(user, userid);
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude({ following: true })
+  @HttpCode(200)
+  @Get('/following')
+  async getFollowing(@User() user): Promise<Response> {
     return {
-      data: await this.friendsService.unfollowUser(user, userid),
+      data: await this.friendsService.getFollowing(user),
     };
   }
 
