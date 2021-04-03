@@ -65,10 +65,23 @@ export class FriendsController {
 
   @UseGuards(UserAuthGuard)
   @HttpCode(200)
-  @Get('/stats/:userid')
-  async userStats(@Param() params): Promise<Response> {
+  @Get('/following/:userid')
+  async checkFollowing(
+    @User() user,
+    @Param('userid') userid,
+  ): Promise<Response> {
     return {
-      data: await this.friendsService.userStats(params),
+      data: await this.friendsService.checkFollowing(user, userid),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude({ following: true, followedBy: true })
+  @HttpCode(200)
+  @Get('/stats/:userid')
+  async userStats(@User() user, @Param('userid') userid): Promise<Response> {
+    return {
+      data: await this.friendsService.userStats(user, userid),
     };
   }
 }

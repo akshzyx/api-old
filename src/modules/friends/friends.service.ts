@@ -47,45 +47,89 @@ export class FriendsService {
           id: userid,
         },
         include: {
-          followedBy: true,
+          followedBy: {
+            select: {
+              id: true,
+              displayName: true,
+              image: true,
+              country: true,
+            },
+          },
         },
       })
-    ).followedBy.map((user) => {
-      return {
-        id: user.id,
-        displayName: user.displayName,
-        image: user.image,
-        country: user.country,
-      };
-    });
+    ).followedBy;
+  }
+
+  async checkFollowing(user, userid) {
+    if (user.id == userid) return;
+    return (
+      await this.prisma.user.findFirst({
+        where: {
+          id: user.id,
+        },
+        select: {
+          following: {
+            where: {
+              id: userid,
+            },
+            select: {
+              id: true,
+              displayName: true,
+              image: true,
+              country: true,
+            },
+          },
+        },
+      })
+    ).following;
   }
 
   async followUser(user, userid) {
     if (user.id == userid) return;
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        following: {
-          connect: { id: userid },
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: user.id,
         },
-      },
-    });
+        data: {
+          following: {
+            connect: { id: userid },
+          },
+        },
+      });
+    } catch (e) {
+      if (
+        e.message.indexOf(
+          'The records for relation `UserFollows` between the `User` and `User` models are not connected.',
+        ) == -1
+      ) {
+        throw Error(e);
+      }
+    }
   }
 
   async unfollowUser(user, userid) {
     if (user.id == userid) return;
-    await this.prisma.user.update({
-      where: {
-        id: user.id,
-      },
-      data: {
-        following: {
-          disconnect: { id: userid },
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: user.id,
         },
-      },
-    });
+        data: {
+          following: {
+            disconnect: { id: userid },
+          },
+        },
+      });
+    } catch (e) {
+      if (
+        e.message.indexOf(
+          'The records for relation `UserFollows` between the `User` and `User` models are not connected.',
+        ) == -1
+      ) {
+        throw Error(e);
+      }
+    }
   }
 
   async getFollowing(user) {
@@ -99,8 +143,14 @@ export class FriendsService {
     });
   }
 
-  async userStats(params) {
-    const userid = params?.userid;
+  async userStats(user, userid) {
+    const follows = user.following.filter((a) => a.id == userid).length == 1;
+    const followed = user.followedBy.filter((a) => a.id == userid).length == 1;
+
+    if (!follows || (!followed && user.id != userid)) {
+      throw new HttpException('users arent friends', 401);
+    }
+
     const spotifyApi = await this.getApi(userid);
 
     const [userInfo, recentlyPlayed, topArtists, topTracks] = (
