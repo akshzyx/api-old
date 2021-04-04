@@ -44,7 +44,10 @@ export class AuthService {
     user.settings.refreshToken = decrypt(user.settings.refreshToken);
     spotifyApi.setRefreshToken(user.settings.refreshToken);
 
-    if (new Date(user.settings.accessTokenExpiration).getTime() < Date.now()) {
+    if (
+      new Date(user.settings.accessTokenExpiration).getTime() <
+      Date.now() - 1000
+    ) {
       spotifyApi.refreshAccessToken().then(async (refreshResult) => {
         spotifyApi.setAccessToken(refreshResult.body.access_token);
         spotifyApi.setRefreshToken(refreshResult.body.refresh_token);
