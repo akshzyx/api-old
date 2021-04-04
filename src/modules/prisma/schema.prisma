@@ -10,21 +10,22 @@ generator client {
 }
 
 model User {
-  id              String          @id
-  displayName     String
-  disabled        Boolean
-  email           String?
-  image           String?
-  country         String?
-  product         String?
-  settings        UserSettings    @relation(fields: [userSettingsId], references: [id])
-  userSettingsId  Int
-  apiClient       ApiClient       @relation(fields: [apiClientId], references: [id])
-  apiClientId     String
-  isPlus          Boolean         @default(false)
-  inAppPurchase   InAppPurchase[]
-  followedBy      User[]          @relation("UserFollows", references: [id])
-  following       User[]          @relation("UserFollows", references: [id])
+  id             String          @id
+  displayName    String
+  disabled       Boolean
+  email          String?
+  image          String?
+  country        String?
+  product        String?
+  settings       UserSettings    @relation(fields: [userSettingsId], references: [id])
+  userSettingsId Int
+  apiClient      ApiClient       @relation(fields: [apiClientId], references: [id])
+  apiClientId    String
+  isPlus         Boolean         @default(false)
+  inAppPurchase  InAppPurchase[]
+  shareSettings  SharingSettings @default(SELECTED)
+  friendsFrom    User[]          @relation("Friends", references: [id])
+  friendsWith    User[]          @relation("Friends", references: [id])
 }
 
 model UserSettings {
@@ -32,7 +33,6 @@ model UserSettings {
   refreshToken          String
   accessToken           String
   accessTokenExpiration DateTime
-  sharesStats           Boolean  @default(false)
   User                  User[]
 }
 
@@ -50,4 +50,10 @@ model InAppPurchase {
   userId        String
   productId     String
   googleOrderId String?
+}
+
+enum SharingSettings {
+  NONE
+  SELECTED
+  ALL
 }

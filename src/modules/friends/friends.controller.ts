@@ -1,10 +1,9 @@
 import {
   Controller,
-  Delete,
   Get,
   HttpCode,
   Param,
-  Put,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -18,6 +17,78 @@ import { FriendsService } from './friends.service';
 export class FriendsController {
   constructor(private friendsService: FriendsService) {}
 
+  @UseGuards(UserAuthGuard)
+  @AuthInclude({
+    friendsWith: {
+      select: {
+        id: true,
+        displayName: true,
+        image: true,
+        country: true,
+      },
+    },
+    friendsFrom: {
+      select: {
+        id: true,
+      },
+    },
+  })
+  @HttpCode(200)
+  @Get('/')
+  async getFriends(@User() user): Promise<Response> {
+    return {
+      data: await this.friendsService.getFriends(user),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude({
+    friendsWith: {
+      select: {
+        id: true,
+        displayName: true,
+        image: true,
+        country: true,
+      },
+    },
+    friendsFrom: {
+      select: {
+        id: true,
+      },
+    },
+  })
+  @HttpCode(200)
+  @Get('/with')
+  async getFriendsWith(@User() user): Promise<Response> {
+    return {
+      data: await this.friendsService.getFriendsWith(user),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude({
+    friendsFrom: {
+      select: {
+        id: true,
+        displayName: true,
+        image: true,
+        country: true,
+      },
+    },
+    friendsWith: {
+      select: {
+        id: true,
+      },
+    },
+  })
+  @HttpCode(200)
+  @Get('/from')
+  async getFriendsFrom(@User() user): Promise<Response> {
+    return {
+      data: await this.friendsService.getFriendsFrom(user),
+    };
+  }
+
   @UseGuards(AuthGuard)
   @HttpCode(200)
   @Get('/search')
@@ -28,55 +99,32 @@ export class FriendsController {
   }
 
   @UseGuards(UserAuthGuard)
-  @AuthInclude()
   @HttpCode(200)
-  @Get('/:userid/followers')
-  async getFollowers(@Param('userid') userid): Promise<Response> {
+  @Get('/status/:userid')
+  async friendStatus(@User() user, @Param('userid') userid): Promise<Response> {
     return {
-      data: await this.friendsService.getFollowers(userid),
+      data: await this.friendsService.friendStatus(user, userid),
     };
   }
 
   @UseGuards(UserAuthGuard)
   @AuthInclude()
   @HttpCode(200)
-  @Put('/:userid/followers')
-  async followUser(@User() user, @Param('userid') userid) {
-    await this.friendsService.followUser(user, userid);
+  @Post('/add/:userid')
+  async addFriend(@User() user, @Param('userid') userid) {
+    await this.friendsService.addFriend(user, userid);
   }
 
   @UseGuards(UserAuthGuard)
   @AuthInclude()
   @HttpCode(200)
-  @Delete('/:userid/followers')
-  async unfollowUser(@User() user, @Param('userid') userid) {
-    await this.friendsService.unfollowUser(user, userid);
+  @Post('/remove/:userid')
+  async removeFriend(@User() user, @Param('userid') userid) {
+    await this.friendsService.removeFriend(user, userid);
   }
 
   @UseGuards(UserAuthGuard)
-  @AuthInclude({ following: true })
-  @HttpCode(200)
-  @Get('/following')
-  async getFollowing(@User() user): Promise<Response> {
-    return {
-      data: await this.friendsService.getFollowing(user),
-    };
-  }
-
-  @UseGuards(UserAuthGuard)
-  @HttpCode(200)
-  @Get('/following/:userid')
-  async checkFollowing(
-    @User() user,
-    @Param('userid') userid,
-  ): Promise<Response> {
-    return {
-      data: await this.friendsService.checkFollowing(user, userid),
-    };
-  }
-
-  @UseGuards(UserAuthGuard)
-  @AuthInclude({ following: true, followedBy: true })
+  @AuthInclude({ friendsFrom: { select: { id: true } } })
   @HttpCode(200)
   @Get('/stats/:userid')
   async userStats(@User() user, @Param('userid') userid): Promise<Response> {

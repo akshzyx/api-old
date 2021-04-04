@@ -1,3 +1,4 @@
+import { SharingSettings } from '.prisma/client';
 import { HttpException, Injectable } from '@nestjs/common';
 import { AuthService } from '../auth/auth.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -40,51 +41,40 @@ export class FriendsService {
     return users;
   }
 
-  async getFollowers(userid) {
-    return (
-      await this.prisma.user.findUnique({
-        where: {
-          id: userid,
-        },
-        include: {
-          followedBy: {
-            select: {
-              id: true,
-              displayName: true,
-              image: true,
-              country: true,
-            },
-          },
-        },
-      })
-    ).followedBy;
-  }
-
-  async checkFollowing(user, userid) {
+  async friendStatus(user, userid) {
     if (user.id == userid) return;
-    return (
-      await this.prisma.user.findFirst({
-        where: {
-          id: user.id,
-        },
-        select: {
-          following: {
-            where: {
-              id: userid,
-            },
-            select: {
-              id: true,
-              displayName: true,
-              image: true,
-              country: true,
-            },
+    return await this.prisma.user.findFirst({
+      where: {
+        id: user.id,
+      },
+      select: {
+        friendsFrom: {
+          where: {
+            id: userid,
+          },
+          select: {
+            id: true,
+            displayName: true,
+            image: true,
+            country: true,
           },
         },
-      })
-    ).following;
+        friendsWith: {
+          where: {
+            id: userid,
+          },
+          select: {
+            id: true,
+            displayName: true,
+            image: true,
+            country: true,
+          },
+        },
+      },
+    });
   }
 
-  async followUser(user, userid) {
+  async addFriend(user, userid) {
     if (user.id == userid) return;
     try {
       await this.prisma.user.update({
@@ -92,23 +82,18 @@ export class FriendsService {
           id: user.id,
         },
         data: {
-          following: {
+          friendsWith: {
             connect: { id: userid },
           },
         },
       });
     } catch (e) {
-      if (
-        e.message.indexOf(
-          'The records for relation `UserFollows` between the `User` and `User` models are not connected.',
-        ) == -1
-      ) {
-        throw Error(e);
-      }
+      console.log(e.message);
+      if (e.message.indexOf('are not connected') == -1) throw Error(e);
     }
   }
 
-  async unfollowUser(user, userid) {
+  async removeFriend(user, userid) {
     if (user.id == userid) return;
     try {
       await this.prisma.user.update({
@@ -116,39 +101,56 @@ export class FriendsService {
           id: user.id,
         },
         data: {
-          following: {
+          friendsWith: {
             disconnect: { id: userid },
           },
         },
       });
     } catch (e) {
-      if (
-        e.message.indexOf(
-          'The records for relation `UserFollows` between the `User` and `User` models are not connected.',
-        ) == -1
-      ) {
-        throw Error(e);
-      }
+      console.log(e.message);
+      if (e.message.indexOf('are not connected') == -1) throw Error(e);
     }
   }
 
-  async getFollowing(user) {
-    return user.following.map((user) => {
-      return {
-        id: user.id,
-        displayName: user.displayName,
-        image: user.image,
-        country: user.country,
-      };
+  async getFriends(user) {
+    const friends = [];
+
+    user.friendsWith.forEach((friend) => {
+      if (!!user.friendsFrom.find((friendId) => friend.id === friendId.id)) {
+        friends.push(friend);
+      }
     });
+
+    return friends;
+  }
+
+  async getFriendsFrom(user) {
+    return user.friendsFrom.filter(
+      (friend) =>
+        !user.friendsWith.find((friendId) => friend.id === friendId.id),
+    );
+  }
+
+  async getFriendsWith(user) {
+    return user.friendsWith.filter(
+      (friend) =>
+        !user.friendsFrom.find((friendId) => friend.id === friendId.id),
+    );
   }
 
   async userStats(user, userid) {
-    const follows = user.following.filter((a) => a.id == userid).length == 1;
-    const followed = user.followedBy.filter((a) => a.id == userid).length == 1;
-
-    if (!follows || (!followed && user.id != userid)) {
-      throw new HttpException('users arent friends', 401);
+    switch (user.shareSettings) {
+      case SharingSettings.ALL:
+        break;
+      case SharingSettings.SELECTED:
+        const friends =
+          user.friendsFrom.filter((a) => a.id == userid).length == 1;
+        if (!friends && user.id != userid) {
+          throw new HttpException('user doesnt share stats', 400);
+        }
+        break;
+      case SharingSettings.NONE:
+        throw new HttpException('user doesnt share stats', 400);
     }
 
     const spotifyApi = await this.getApi(userid);
@@ -186,10 +188,6 @@ export class FriendsService {
 
     if (dbUser == null) {
       throw new HttpException('no user found', 400);
-    }
-
-    if (!dbUser.settings.sharesStats) {
-      throw new HttpException('user doesnt share stats', 400);
     }
 
     const user = await this.authService.getToken(dbUser);
