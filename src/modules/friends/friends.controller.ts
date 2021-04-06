@@ -41,15 +41,6 @@ export class FriendsController {
     };
   }
 
-  @UseGuards(AuthGuard)
-  @HttpCode(200)
-  @Get('/:userid')
-  async getUserByID(@Param('userid') userid): Promise<Response> {
-    return {
-      data: await this.friendsService.getUserByID(userid),
-    };
-  }
-
   @UseGuards(UserAuthGuard)
   @AuthInclude({
     friendsWith: {
@@ -130,6 +121,15 @@ export class FriendsController {
   @Post('/remove/:userid')
   async removeFriend(@User() user, @Param('userid') userid) {
     await this.friendsService.removeFriend(user, userid);
+  }
+
+  @UseGuards(AuthGuard)
+  @HttpCode(200)
+  @Get('/get/:userid')
+  async getUserByID(@Param('userid') userid): Promise<Response> {
+    return {
+      data: await this.friendsService.getUserByID(userid),
+    };
   }
 
   @UseGuards(UserAuthGuard)
