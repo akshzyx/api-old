@@ -41,6 +41,20 @@ export class FriendsService {
     return users;
   }
 
+  async getUserByID(userid) {
+    return await this.prisma.user.findUnique({
+      where: {
+        id: userid,
+      },
+      select: {
+        id: true,
+        displayName: true,
+        image: true,
+        country: true,
+      },
+    });
+  }
+
   async friendStatus(user, userid) {
     if (user.id == userid) return;
     return await this.prisma.user.findFirst({

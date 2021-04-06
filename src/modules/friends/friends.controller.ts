@@ -41,6 +41,15 @@ export class FriendsController {
     };
   }
 
+  @UseGuards(AuthGuard)
+  @HttpCode(200)
+  @Get('/:userid')
+  async getUserByID(@Param('userid') userid): Promise<Response> {
+    return {
+      data: await this.friendsService.getUserByID(userid),
+    };
+  }
+
   @UseGuards(UserAuthGuard)
   @AuthInclude({
     friendsWith: {
