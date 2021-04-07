@@ -8,6 +8,8 @@ dist/
 .DS_STORE
 data/
 spotistats-a49da-a4f206dcbf07.json
-src/modules/prisma/migrations
+src/modules/prisma/migrations-old
 *.log
 spotistats-a49da-be9ea38b0d73.json
+start_dev.sh
+.vscode

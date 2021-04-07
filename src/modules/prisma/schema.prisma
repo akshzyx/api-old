@@ -23,7 +23,7 @@ model User {
   apiClientId    String
   isPlus         Boolean         @default(false)
   inAppPurchase  InAppPurchase[]
-  shareSettings  SharingSettings @default(SELECTED)
+  shareSettings  SharingSettings @default(FRIENDS)
   friendsFrom    User[]          @relation("Friends", references: [id])
   friendsWith    User[]          @relation("Friends", references: [id])
 }
@@ -54,6 +54,6 @@ model InAppPurchase {
 
 enum SharingSettings {
   NONE
-  SELECTED
+  FRIENDS
   ALL
 }
