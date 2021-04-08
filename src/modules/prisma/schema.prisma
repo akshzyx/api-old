@@ -25,7 +25,7 @@ model User {
   inAppPurchase  InAppPurchase[]
   shareSettings  SharingSettings @default(FRIENDS)
   friendsFrom    User[]          @relation("Friends", references: [id])
-  friendsWith    User[]          @relation("Friends", references: [id])
+  friendsTo      User[]          @relation("Friends", references: [id])
 }
 
 model UserSettings {
