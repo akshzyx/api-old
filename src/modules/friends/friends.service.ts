@@ -87,7 +87,7 @@ export class FriendsService {
     } else if (data.friendsFrom.length == 1) {
       status = _FriendStatus.FRIENDSFROM;
     } else if (data.friendsTo.length == 1) {
-      status = _FriendStatus.friendsTo;
+      status = _FriendStatus.FRIENDSTO;
     }
 
     return status;
@@ -246,7 +246,7 @@ export class FriendsService {
 
 enum _FriendStatus {
   NONE,
-  friendsTo,
+  FRIENDSTO,
   FRIENDSFROM,
   FRIENDS,
 }
