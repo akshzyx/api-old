@@ -36,9 +36,9 @@ export class FriendsController {
   })
   @HttpCode(200)
   @Get('/')
-  async getFriends(@UserId() userid): Promise<Response> {
+  async getFriends(@User() user): Promise<Response> {
     return {
-      data: await this.friendsService.getFriends(userid),
+      data: await this.friendsService.getFriends(user),
     };
   }
 
