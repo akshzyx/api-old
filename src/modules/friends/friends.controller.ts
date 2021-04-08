@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -8,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthInclude } from '../../decorators/AuthInclude.decorator';
-import { User } from '../../decorators/user.decorator';
+import { User, UserId } from '../../decorators/user.decorator';
 import { AuthGuard, UserAuthGuard } from '../../guards/auth.guard';
 import { Response } from '../../interfaces/response';
 import { FriendsService } from './friends.service';
@@ -17,33 +18,18 @@ import { FriendsService } from './friends.service';
 export class FriendsController {
   constructor(private friendsService: FriendsService) {}
 
-  @UseGuards(UserAuthGuard)
-  @AuthInclude({
-    friendsWith: {
-      select: {
-        id: true,
-        displayName: true,
-        image: true,
-        country: true,
-      },
-    },
-    friendsFrom: {
-      select: {
-        id: true,
-      },
-    },
-  })
+  @UseGuards(AuthGuard)
   @HttpCode(200)
   @Get('/')
-  async getFriends(@User() user): Promise<Response> {
+  async getFriends(@UserId() userid): Promise<Response> {
     return {
-      data: await this.friendsService.getFriends(user),
+      data: await this.friendsService.getFriends(userid),
     };
   }
 
   @UseGuards(UserAuthGuard)
   @AuthInclude({
-    friendsWith: {
+    friendsTo: {
       select: {
         id: true,
         displayName: true,
@@ -58,10 +44,10 @@ export class FriendsController {
     },
   })
   @HttpCode(200)
-  @Get('/with')
-  async getFriendsWith(@User() user): Promise<Response> {
+  @Get('/to')
+  async getfriendsTo(@User() user): Promise<Response> {
     return {
-      data: await this.friendsService.getFriendsWith(user),
+      data: await this.friendsService.getfriendsTo(user),
     };
   }
 
@@ -75,7 +61,7 @@ export class FriendsController {
         country: true,
       },
     },
-    friendsWith: {
+    friendsTo: {
       select: {
         id: true,
       },
@@ -98,10 +84,13 @@ export class FriendsController {
     };
   }
 
-  @UseGuards(UserAuthGuard)
+  @UseGuards(AuthGuard)
   @HttpCode(200)
   @Get('/status/:userid')
-  async friendStatus(@User() user, @Param('userid') userid): Promise<Response> {
+  async friendStatus(
+    @UserId() user,
+    @Param('userid') userid,
+  ): Promise<Response> {
     return {
       data: await this.friendsService.friendStatus(user, userid),
     };
@@ -139,6 +128,16 @@ export class FriendsController {
   async userStats(@User() user, @Param('userid') userid): Promise<Response> {
     return {
       data: await this.friendsService.userStats(user, userid),
+    };
+  }
+
+  @UseGuards(UserAuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Post('/settings')
+  async setSharingSettings(@User() user, @Body() body): Promise<Response> {
+    return {
+      data: await this.friendsService.setSharingSettings(user, body),
     };
   }
 }
