@@ -18,7 +18,22 @@ import { FriendsService } from './friends.service';
 export class FriendsController {
   constructor(private friendsService: FriendsService) {}
 
-  @UseGuards(AuthGuard)
+  @UseGuards(UserAuthGuard)
+  @AuthInclude({
+    friendsTo: {
+      select: {
+        id: true,
+        displayName: true,
+        image: true,
+        country: true,
+      },
+    },
+    friendsFrom: {
+      select: {
+        id: true,
+      },
+    },
+  })
   @HttpCode(200)
   @Get('/')
   async getFriends(@UserId() userid): Promise<Response> {
