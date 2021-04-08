@@ -99,7 +99,7 @@ export class FriendsController {
     };
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(UserAuthGuard)
   @HttpCode(200)
   @Get('/status/:userid')
   async friendStatus(@User() user, @Param('userid') userid): Promise<Response> {
