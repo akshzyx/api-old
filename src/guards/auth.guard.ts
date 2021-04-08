@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../modules/prisma/prisma.service';
-import { verify } from 'jsonwebtoken';
+import { decode, verify } from 'jsonwebtoken';
 import { Reflector } from '@nestjs/core';
 import { Prisma } from '.prisma/client';
 
@@ -61,7 +61,9 @@ export class AuthGuard implements CanActivate {
     const token = request?.headers?.authorization as string;
 
     try {
-      verify(token, jwtSecret);
+      const { userid } = verify(token, jwtSecret) as Record<string, unknown>;
+      if (userid == undefined || userid == null) throw Error();
+      request.userid = userid;
     } catch (e) {
       return false;
     }
