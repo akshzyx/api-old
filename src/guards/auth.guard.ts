@@ -61,9 +61,9 @@ export class AuthGuard implements CanActivate {
     const token = request?.headers?.authorization as string;
 
     try {
-      const { userid } = verify(token, jwtSecret) as Record<string, unknown>;
-      if (userid == undefined || userid == null) throw Error();
-      request.userid = userid;
+      const decoded = verify(token, jwtSecret) as Record<string, unknown>;
+      if (!('userId' in decoded)) throw Error();
+      request.userid = decoded.userId;
     } catch (e) {
       return false;
     }
