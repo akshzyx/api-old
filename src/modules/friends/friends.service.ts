@@ -57,9 +57,9 @@ export class FriendsService {
 
   async friendStatus(user, userid) {
     if (user.id == userid) return;
-    const data = await this.prisma.user.findFirst({
+    const data = await this.prisma.user.findUnique({
       where: {
-        id: userid,
+        id: user.id,
       },
       select: {
         friendsFrom: {

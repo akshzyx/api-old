@@ -102,10 +102,7 @@ export class FriendsController {
   @UseGuards(AuthGuard)
   @HttpCode(200)
   @Get('/status/:userid')
-  async friendStatus(
-    @UserId() user,
-    @Param('userid') userid,
-  ): Promise<Response> {
+  async friendStatus(@User() user, @Param('userid') userid): Promise<Response> {
     return {
       data: await this.friendsService.friendStatus(user, userid),
     };
