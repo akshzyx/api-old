@@ -46,7 +46,7 @@ export class AuthService {
 
     if (
       new Date(user.settings.accessTokenExpiration).getTime() <
-      Date.now() - 1000
+      Date.now() + 5
     ) {
       spotifyApi.refreshAccessToken().then(async (refreshResult) => {
         spotifyApi.setAccessToken(refreshResult.body.access_token);
@@ -62,6 +62,9 @@ export class AuthService {
         refreshResult.body.access_token = encrypt(
           refreshResult.body.access_token,
         );
+
+        user.settings.accessToken = refreshResult.body.access_token;
+        user.settings.accessTokenExpiration = expirationDate;
 
         await this.prisma.user.update({
           where: { id: user.id },
