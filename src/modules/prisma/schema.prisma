@@ -23,6 +23,33 @@ model User {
   apiClientId    String
   isPlus         Boolean         @default(false)
   inAppPurchase  InAppPurchase[]
+  shareSettings  SharingSettings @default(FRIENDS)
+
+  friendRequestsTo   FriendRequest[] @relation(name: "friendrequest_to")
+  friendRequestsFrom FriendRequest[] @relation(name: "friendrequest_from")
+
+  friendsA Friend[] @relation(name: "friend_a")
+  friendsB Friend[] @relation(name: "friend_b")
+}
+
+model Friend {
+  a         User     @relation(name: "friend_a", fields: [aId], references: [id])
+  aId       String
+  b         User     @relation(name: "friend_b", fields: [bId], references: [id])
+  bId       String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([aId, bId])
+}
+
+model FriendRequest {
+  from      User     @relation(name: "friendrequest_from", fields: [fromId], references: [id])
+  fromId    String
+  to        User     @relation(name: "friendrequest_to", fields: [toId], references: [id])
+  toId      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([fromId, toId])
 }
 
 model UserSettings {
@@ -30,7 +57,6 @@ model UserSettings {
   refreshToken          String
   accessToken           String
   accessTokenExpiration DateTime
-  sharesStats           Boolean  @default(false)
   User                  User[]
 }
 
@@ -48,4 +74,10 @@ model InAppPurchase {
   userId        String
   productId     String
   googleOrderId String?
+}
+
+enum SharingSettings {
+  NONE
+  FRIENDS
+  ALL
 }

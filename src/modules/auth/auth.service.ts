@@ -44,37 +44,43 @@ export class AuthService {
     user.settings.refreshToken = decrypt(user.settings.refreshToken);
     spotifyApi.setRefreshToken(user.settings.refreshToken);
 
-    if (new Date(user.settings.accessTokenExpiration).getTime() < Date.now()) {
-      spotifyApi.refreshAccessToken().then(async (refreshResult) => {
-        spotifyApi.setAccessToken(refreshResult.body.access_token);
-        spotifyApi.setRefreshToken(refreshResult.body.refresh_token);
+    if (
+      new Date(user.settings.accessTokenExpiration).getTime() <
+      Date.now() + 5
+    ) {
+      const refreshResult = await spotifyApi.refreshAccessToken();
+      spotifyApi.setAccessToken(refreshResult.body.access_token);
+      spotifyApi.setRefreshToken(refreshResult.body.refresh_token);
 
-        const expirationDate = new Date(
-          Date.now() + refreshResult.body.expires_in * 1000,
-        );
+      const expirationDate = new Date(
+        Date.now() + refreshResult.body.expires_in * 1000,
+      );
 
-        refreshResult.body.refresh_token = encrypt(
-          refreshResult.body.refresh_token,
-        );
-        refreshResult.body.access_token = encrypt(
-          refreshResult.body.access_token,
-        );
+      user.settings.accessToken = refreshResult.body.access_token;
+      user.settings.accessTokenExpiration = expirationDate;
 
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: {
-            settings: {
-              update: {
-                accessToken: refreshResult.body.access_token,
-                refreshToken: refreshResult.body.refresh_token,
-                accessTokenExpiration: expirationDate,
-              },
+      refreshResult.body.refresh_token = encrypt(
+        refreshResult.body.refresh_token,
+      );
+      refreshResult.body.access_token = encrypt(
+        refreshResult.body.access_token,
+      );
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          settings: {
+            update: {
+              accessToken: refreshResult.body.access_token,
+              refreshToken: refreshResult.body.refresh_token,
+              accessTokenExpiration: expirationDate,
             },
           },
-        });
+        },
       });
+    } else {
+      user.settings.accessToken = decrypt(user.settings.accessToken);
     }
-    user.settings.accessToken = decrypt(user.settings.accessToken);
 
     delete user.settings.refreshToken;
     delete user.apiClient;
