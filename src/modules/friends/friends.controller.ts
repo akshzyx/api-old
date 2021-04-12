@@ -18,19 +18,109 @@ import { FriendsService } from './friends.service';
 export class FriendsController {
   constructor(private friendsService: FriendsService) {}
 
+  @UseGuards(AuthGuard)
+  @HttpCode(200)
+  @Get('/search')
+  async searchUser(@Query('query') query): Promise<Response> {
+    return {
+      data: await this.friendsService.searchUser(query),
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @HttpCode(200)
+  @Get('/status/:userid')
+  async friendStatus(
+    @UserId() selfUserId,
+    @Param('userid') friendUserId,
+  ): Promise<Response> {
+    return {
+      data: await this.friendsService.friendStatus(selfUserId, friendUserId),
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Post('/requests/send/:userid')
+  async sendFriendRequest(@UserId() selfUserId, @Param('userid') friendUserId) {
+    await this.friendsService.sendFriendRequest(selfUserId, friendUserId);
+  }
+
+  @UseGuards(AuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Post('/requests/cancel/:userid')
+  async cancelFriendRequest(
+    @UserId() selfUserId,
+    @Param('userid') friendUserId,
+  ) {
+    await this.friendsService.cancelFriendRequest(selfUserId, friendUserId);
+  }
+
+  @UseGuards(AuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Post('/requests/accept/:userid')
+  async acceptFriendRequest(
+    @UserId() selfUserId,
+    @Param('userid') friendUserId,
+  ) {
+    await this.friendsService.acceptFriendRequest(selfUserId, friendUserId);
+  }
+
+  @UseGuards(AuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Post('/requests/deny/:userid')
+  async denyFriendRequest(@UserId() selfUserId, @Param('userid') friendUserId) {
+    await this.friendsService.denyFriendRequest(selfUserId, friendUserId);
+  }
+
+  @UseGuards(AuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Get('/requests/incoming')
+  async getIncomingRequests(@UserId() selfUserId) {
+    return {
+      data: await this.friendsService.getIncomingRequests(selfUserId),
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @AuthInclude()
+  @HttpCode(200)
+  @Get('/requests/outgoing')
+  async getOutgoingRequests(@UserId() selfUserId) {
+    return {
+      data: await this.friendsService.getOutgoingRequests(selfUserId),
+    };
+  }
+
   @UseGuards(UserAuthGuard)
   @AuthInclude({
-    friendsTo: {
-      select: {
-        id: true,
-        displayName: true,
-        image: true,
-        country: true,
+    friendsA: {
+      include: {
+        b: {
+          select: {
+            id: true,
+            displayName: true,
+            image: true,
+            country: true,
+          },
+        },
       },
     },
-    friendsFrom: {
-      select: {
-        id: true,
+    friendsB: {
+      include: {
+        a: {
+          select: {
+            id: true,
+            displayName: true,
+            image: true,
+            country: true,
+          },
+        },
       },
     },
   })
@@ -42,88 +132,6 @@ export class FriendsController {
     };
   }
 
-  @UseGuards(UserAuthGuard)
-  @AuthInclude({
-    friendsTo: {
-      select: {
-        id: true,
-        displayName: true,
-        image: true,
-        country: true,
-      },
-    },
-    friendsFrom: {
-      select: {
-        id: true,
-      },
-    },
-  })
-  @HttpCode(200)
-  @Get('/to')
-  async getfriendsTo(@User() user): Promise<Response> {
-    return {
-      data: await this.friendsService.getfriendsTo(user),
-    };
-  }
-
-  @UseGuards(UserAuthGuard)
-  @AuthInclude({
-    friendsFrom: {
-      select: {
-        id: true,
-        displayName: true,
-        image: true,
-        country: true,
-      },
-    },
-    friendsTo: {
-      select: {
-        id: true,
-      },
-    },
-  })
-  @HttpCode(200)
-  @Get('/from')
-  async getFriendsFrom(@User() user): Promise<Response> {
-    return {
-      data: await this.friendsService.getFriendsFrom(user),
-    };
-  }
-
-  @UseGuards(AuthGuard)
-  @HttpCode(200)
-  @Get('/search')
-  async searchUser(@Query('query') query): Promise<Response> {
-    return {
-      data: await this.friendsService.searchUser(query),
-    };
-  }
-
-  @UseGuards(UserAuthGuard)
-  @HttpCode(200)
-  @Get('/status/:userid')
-  async friendStatus(@User() user, @Param('userid') userid): Promise<Response> {
-    return {
-      data: await this.friendsService.friendStatus(user, userid),
-    };
-  }
-
-  @UseGuards(UserAuthGuard)
-  @AuthInclude()
-  @HttpCode(200)
-  @Post('/add/:userid')
-  async addFriend(@User() user, @Param('userid') userid) {
-    await this.friendsService.addFriend(user, userid);
-  }
-
-  @UseGuards(UserAuthGuard)
-  @AuthInclude()
-  @HttpCode(200)
-  @Post('/remove/:userid')
-  async removeFriend(@User() user, @Param('userid') userid) {
-    await this.friendsService.removeFriend(user, userid);
-  }
-
   @UseGuards(AuthGuard)
   @HttpCode(200)
   @Get('/get/:userid')
@@ -133,23 +141,40 @@ export class FriendsController {
     };
   }
 
-  @UseGuards(UserAuthGuard)
-  @AuthInclude({ friendsFrom: { select: { id: true } } })
+  @UseGuards(AuthGuard)
   @HttpCode(200)
-  @Get('/stats/:userid')
-  async userStats(@User() user, @Param('userid') userid): Promise<Response> {
+  @Post('/remove/:userid')
+  async removeFriend(
+    @UserId() selfUserId,
+    @Param('userid') friendUserId,
+  ): Promise<Response> {
     return {
-      data: await this.friendsService.userStats(user, userid),
+      data: await this.friendsService.removeFriend(selfUserId, friendUserId),
     };
   }
 
-  @UseGuards(UserAuthGuard)
+  @UseGuards(AuthGuard)
+  @HttpCode(200)
+  @Get('/stats/:userid')
+  async userStats(
+    @UserId() selfUserId,
+    @Param('userid') friendUserId,
+  ): Promise<Response> {
+    return {
+      data: await this.friendsService.userStats(selfUserId, friendUserId),
+    };
+  }
+
+  @UseGuards(AuthGuard)
   @AuthInclude()
   @HttpCode(200)
   @Post('/settings')
-  async setSharingSettings(@User() user, @Body() body): Promise<Response> {
+  async setSharingSettings(
+    @UserId() selfUserId,
+    @Body() body,
+  ): Promise<Response> {
     return {
-      data: await this.friendsService.setSharingSettings(user, body),
+      data: await this.friendsService.setSharingSettings(selfUserId, body),
     };
   }
 }

@@ -55,116 +55,190 @@ export class FriendsService {
     });
   }
 
-  async friendStatus(user, userid) {
-    if (user.id == userid) return;
-    const data = await this.prisma.user.findUnique({
-      where: {
-        id: user.id,
-      },
-      select: {
-        friendsFrom: {
-          where: {
-            id: userid,
-          },
-          select: {
-            id: true,
-          },
+  async friendStatus(selfUserId, friendUserId) {
+    if (selfUserId === friendUserId) return;
+
+    const friendShip = await this._getFriendShip(selfUserId, friendUserId);
+
+    let status = _FriendStatus.NONE;
+    if (friendShip) {
+      status = _FriendStatus.FRIENDS;
+    } else {
+      const friendRequest = await this.prisma.friendRequest.findFirst({
+        where: {
+          OR: [
+            {
+              toId: selfUserId,
+              fromId: friendUserId,
+            },
+            {
+              toId: friendUserId,
+              fromId: selfUserId,
+            },
+          ],
         },
-        friendsTo: {
-          where: {
-            id: userid,
-          },
+      });
+      if (
+        friendRequest?.toId === selfUserId &&
+        friendRequest?.fromId === friendUserId
+      ) {
+        status = _FriendStatus.REQUEST_INCOMING;
+      } else if (
+        friendRequest?.toId === friendUserId &&
+        friendRequest?.fromId === selfUserId
+      ) {
+        status = _FriendStatus.REQUEST_OUTGOING;
+      }
+    }
+
+    return _FriendStatus[status];
+  }
+
+  async getIncomingRequests(selfUserId) {
+    return await this.prisma.friendRequest.findMany({
+      where: {
+        toId: selfUserId,
+      },
+      include: {
+        from: {
           select: {
             id: true,
+            displayName: true,
+            image: true,
+            country: true,
           },
         },
       },
     });
-
-    let status = _FriendStatus.NONE;
-    if (data.friendsFrom.length == 1 && data.friendsTo.length == 1) {
-      status = _FriendStatus.FRIENDS;
-    } else if (data.friendsFrom.length == 1) {
-      status = _FriendStatus.FRIENDSFROM;
-    } else if (data.friendsTo.length == 1) {
-      status = _FriendStatus.FRIENDSTO;
-    }
-
-    return status;
   }
 
-  async addFriend(user, userid) {
-    if (user.id == userid) return;
-    try {
-      await this.prisma.user.update({
-        where: {
-          id: user.id,
-        },
-        data: {
-          friendsTo: {
-            connect: { id: userid },
+  async getOutgoingRequests(selfUserId) {
+    return await this.prisma.friendRequest.findMany({
+      where: {
+        fromId: selfUserId,
+      },
+      include: {
+        to: {
+          select: {
+            id: true,
+            displayName: true,
+            image: true,
+            country: true,
           },
         },
+      },
+    });
+  }
+
+  async sendFriendRequest(selfUserId, friendUserId) {
+    if (selfUserId === friendUserId) return;
+
+    const friendShip = await this._getFriendShip(selfUserId, friendUserId);
+    if (friendShip) throw new HttpException('users are already friends', 400);
+
+    await this.prisma.friendRequest
+      .create({
+        data: {
+          toId: friendUserId,
+          fromId: selfUserId,
+        },
+      })
+      .catch((e) => {
+        throw new HttpException(e.message, 400);
       });
-      console.log(`connected ${user.id} to ${userid}`);
-    } catch (e) {
-      console.log(e.message);
-      if (e.message.indexOf('are not connected') == -1) throw Error(e);
+  }
+
+  async cancelFriendRequest(selfUserId, friendUserId) {
+    if (selfUserId === friendUserId) return;
+    await this.prisma.friendRequest
+      .delete({
+        where: {
+          fromId_toId: {
+            toId: friendUserId,
+            fromId: selfUserId,
+          },
+        },
+      })
+      .catch((e) => {
+        throw new HttpException(e.message, 400);
+      });
+  }
+
+  async acceptFriendRequest(selfUserId, friendUserId) {
+    if (selfUserId === friendUserId) return;
+    const friendRequest = await this.prisma.friendRequest
+      .delete({
+        where: {
+          fromId_toId: {
+            toId: selfUserId,
+            fromId: friendUserId,
+          },
+        },
+      })
+      .catch((e) => {
+        throw new HttpException(e.message, 400);
+      });
+    if (friendRequest) {
+      const [aId, bId] = [selfUserId, friendUserId].sort();
+      await this.prisma.friend.create({
+        data: {
+          aId,
+          bId,
+        },
+      });
     }
   }
 
-  async removeFriend(user, userid) {
-    if (user.id == userid) return;
-    try {
-      await this.prisma.user.update({
+  async denyFriendRequest(selfUserId, friendUserId) {
+    if (selfUserId === friendUserId) return;
+    await this.prisma.friendRequest
+      .delete({
         where: {
-          id: user.id,
-        },
-        data: {
-          friendsTo: {
-            disconnect: { id: userid },
+          fromId_toId: {
+            toId: selfUserId,
+            fromId: friendUserId,
           },
         },
+      })
+      .catch((e) => {
+        throw new HttpException(e.message, 400);
       });
-      console.log(`disconnected ${user.id} from ${userid}`);
-    } catch (e) {
-      console.log(e.message);
-      if (e.message.indexOf('are not connected') == -1) throw Error(e);
-    }
+  }
+
+  async removeFriend(selfUserId, friendUserId) {
+    const [aId, bId] = [selfUserId, friendUserId].sort();
+    await this.prisma.friend
+      .delete({
+        where: {
+          aId_bId: {
+            aId,
+            bId,
+          },
+        },
+      })
+      .catch((e) => {
+        throw new HttpException(e.message, 400);
+      });
   }
 
   async getFriends(user) {
-    const friends = [];
+    return user.friendsA.concat(user.friendsB).map((f) => (f.a ? f.a : f.b));
+  }
 
-    user.friendsTo.forEach((friend) => {
-      if (!!user.friendsFrom.find((friendId) => friend.id === friendId.id)) {
-        friends.push(friend);
-      }
+  async userStats(selfUserId, friendUserId) {
+    const friend = await this.prisma.user.findUnique({
+      where: {
+        id: friendUserId,
+      },
     });
 
-    return friends;
-  }
-
-  async getFriendsFrom(user) {
-    return user.friendsFrom.filter(
-      (friend) => !user.friendsTo.find((friendId) => friend.id === friendId.id),
-    );
-  }
-
-  async getfriendsTo(user) {
-    return user.friendsTo.filter(
-      (friend) =>
-        !user.friendsFrom.find((friendId) => friend.id === friendId.id),
-    );
-  }
-
-  async userStats(user, userid) {
-    switch (user.shareSettings) {
+    switch (friend.shareSettings) {
       case SharingSettings.ALL:
         break;
       case SharingSettings.FRIENDS:
-        const friends = !!user.friendsFrom.find((a) => a.id == userid);
-        if (!friends && user.id != userid) {
+        const friendShip = await this._getFriendShip(selfUserId, friendUserId);
+
+        if (!friendShip) {
           throw new HttpException('user doesnt share stats', 400);
         }
         break;
@@ -172,11 +246,11 @@ export class FriendsService {
         throw new HttpException('user doesnt share stats', 400);
     }
 
-    const spotifyApi = await this.getApi(userid);
+    const spotifyApi = await this.getApi(friendUserId);
 
     const [userInfo, recentlyPlayed, topArtists, topTracks] = (
       await Promise.all([
-        spotifyApi.getUser(userid),
+        spotifyApi.getUser(friendUserId),
         spotifyApi.getMyRecentlyPlayedTracks({
           limit: 50,
         }),
@@ -199,14 +273,14 @@ export class FriendsService {
     };
   }
 
-  async setSharingSettings(user, body) {
+  async setSharingSettings(selfUserId, body) {
     const sharingSettings: SharingSettings = this._getSharingSettingsFromString(
       body.sharingSettings,
     );
 
     return await this.prisma.user.update({
       where: {
-        id: user.id,
+        id: selfUserId,
       },
       data: {
         shareSettings: sharingSettings,
@@ -220,7 +294,7 @@ export class FriendsService {
       include: { apiClient: true, settings: true },
     });
 
-    if (dbUser == null) {
+    if (!dbUser) {
       throw new HttpException('no user found', 400);
     }
 
@@ -242,11 +316,27 @@ export class FriendsService {
     }
     throw new HttpException('invalid sharingsettings', 400);
   }
+
+  private async _getFriendShip(a, b) {
+    const [aId, bId] = [a, b].sort();
+
+    return await this.prisma.friend.findUnique({
+      where: {
+        aId_bId: {
+          aId,
+          bId,
+        },
+      },
+      select: {
+        createdAt: true,
+      },
+    });
+  }
 }
 
 enum _FriendStatus {
   NONE,
-  FRIENDSTO,
-  FRIENDSFROM,
   FRIENDS,
+  REQUEST_INCOMING,
+  REQUEST_OUTGOING,
 }
