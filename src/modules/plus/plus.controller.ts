@@ -27,6 +27,15 @@ export class PlusController {
     };
   }
 
+  @UseGuards(UserAuthGuard)
+  @HttpCode(200)
+  @Get('/status')
+  async getStatusMe(@User() user): Promise<Response> {
+    return {
+      data: user,
+    };
+  }
+
   @HttpCode(200)
   @Get('/status/:userid') // TODO remove '' after app is updated
   async getStatus(
