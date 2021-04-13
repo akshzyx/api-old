@@ -30,12 +30,7 @@ export class FriendsService {
           },
         ],
       },
-      select: {
-        id: true,
-        displayName: true,
-        image: true,
-        country: true,
-      },
+      select: friendSelect,
     });
 
     return users;
@@ -46,12 +41,7 @@ export class FriendsService {
       where: {
         id: userid,
       },
-      select: {
-        id: true,
-        displayName: true,
-        image: true,
-        country: true,
-      },
+      select: friendSelect,
     });
   }
 
@@ -101,12 +91,7 @@ export class FriendsService {
       },
       include: {
         from: {
-          select: {
-            id: true,
-            displayName: true,
-            image: true,
-            country: true,
-          },
+          select: friendSelect,
         },
       },
     });
@@ -119,12 +104,7 @@ export class FriendsService {
       },
       include: {
         to: {
-          select: {
-            id: true,
-            displayName: true,
-            image: true,
-            country: true,
-          },
+          select: friendSelect,
         },
       },
     });
@@ -232,18 +212,23 @@ export class FriendsService {
       },
     });
 
-    switch (friend.shareSettings) {
-      case SharingSettings.ALL:
-        break;
-      case SharingSettings.FRIENDS:
-        const friendShip = await this._getFriendShip(selfUserId, friendUserId);
+    if (selfUserId != friendUserId) {
+      switch (friend.shareSettings) {
+        case SharingSettings.ALL:
+          break;
+        case SharingSettings.FRIENDS:
+          const friendShip = await this._getFriendShip(
+            selfUserId,
+            friendUserId,
+          );
 
-        if (!friendShip) {
+          if (!friendShip) {
+            throw new HttpException('user doesnt share stats', 400);
+          }
+          break;
+        case SharingSettings.NONE:
           throw new HttpException('user doesnt share stats', 400);
-        }
-        break;
-      case SharingSettings.NONE:
-        throw new HttpException('user doesnt share stats', 400);
+      }
     }
 
     const spotifyApi = await this.getApi(friendUserId);
@@ -340,3 +325,11 @@ enum _FriendStatus {
   REQUEST_INCOMING,
   REQUEST_OUTGOING,
 }
+
+export const friendSelect = {
+  id: true,
+  displayName: true,
+  image: true,
+  country: true,
+  shareSettings: true,
+};

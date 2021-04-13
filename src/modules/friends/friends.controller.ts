@@ -12,7 +12,7 @@ import { AuthInclude } from '../../decorators/AuthInclude.decorator';
 import { User, UserId } from '../../decorators/user.decorator';
 import { AuthGuard, UserAuthGuard } from '../../guards/auth.guard';
 import { Response } from '../../interfaces/response';
-import { FriendsService } from './friends.service';
+import { friendSelect, FriendsService } from './friends.service';
 
 @Controller('/friends')
 export class FriendsController {
@@ -102,24 +102,14 @@ export class FriendsController {
     friendsA: {
       include: {
         b: {
-          select: {
-            id: true,
-            displayName: true,
-            image: true,
-            country: true,
-          },
+          select: friendSelect,
         },
       },
     },
     friendsB: {
       include: {
         a: {
-          select: {
-            id: true,
-            displayName: true,
-            image: true,
-            country: true,
-          },
+          select: friendSelect,
         },
       },
     },
