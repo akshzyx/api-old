@@ -16,18 +16,23 @@ export class StatusController {
 
   @Get()
   async getStatus(): Promise<Response> {
-    // await this.redisService.set('status', Date.now().toString());
     return {
-      data: await this.statusService.getStatus(),
+      data: (await this.statusService.getStatusList())[0],
     };
   }
 
-  @UseGuards(AuthGuard)
+  @Get('/list')
+  async getStatusList(): Promise<Response> {
+    return {
+      data: await this.statusService.getStatusList(),
+    };
+  }
+
   @HttpCode(200)
   @Post()
   async postStatus(@Req() req): Promise<Response> {
     return {
-      data: await this.statusService.postStatus(req.body),
+      data: await this.statusService.postStatus(req),
     };
   }
 }
