@@ -7,6 +7,15 @@ const statusToken = process.env.STATUS_TOKEN;
 export class StatusService {
   constructor(private redisService: RedisService) {}
 
+  async getStatus() {
+    try {
+      const data = await this.getStatusList();
+      return data[0];
+    } catch (e) {
+      return null;
+    }
+  }
+
   async getStatusList() {
     try {
       const data = JSON.parse(await this.redisService.get('status'));

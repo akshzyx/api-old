@@ -17,7 +17,7 @@ export class StatusController {
   @Get()
   async getStatus(): Promise<Response> {
     return {
-      data: (await this.statusService.getStatusList())[0],
+      data: await this.statusService.getStatus(),
     };
   }
 
