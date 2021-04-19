@@ -35,7 +35,7 @@ export class StatusService {
     }
 
     await this.redisService.set('status', JSON.stringify(body), {
-      ttl: 30 * 24 * 60 * 60,
+      ttl: 365 * 24 * 60 * 60,
     });
 
     return body;
