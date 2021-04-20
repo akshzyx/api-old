@@ -14,6 +14,7 @@ export class SpotifyService {
     const spotifyApi = await this.getApi(user);
     const userinfo = await spotifyApi.getMe();
 
+    const image = userinfo.body.images[0]?.url;
     await this.prisma.user.update({
       where: {
         id: userinfo.body.id,
@@ -22,10 +23,23 @@ export class SpotifyService {
         email: userinfo.body.email,
         displayName: userinfo.body.displayName,
         country: userinfo.body.country,
-        image: userinfo.body.images[0]?.url,
+        image: image,
         product: userinfo.body.product,
       },
     });
+
+    // PATCH
+    if (!image || userinfo.body.images.length == 0) {
+      userinfo.body.images = [
+        {
+          height: null,
+          url:
+            'https://media.discordapp.net/attachments/830562126560231464/834151346470387752/image-14-3.png',
+          width: null,
+        },
+      ];
+    }
+    // PATCH
 
     return userinfo;
   }
